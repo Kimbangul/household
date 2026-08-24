@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { formatCurrency } from '../src/domain/currency';
 import { createExpense, validateExpenseInput, type ExpenseInputField } from '../src/domain/expense';
@@ -15,6 +15,14 @@ function todayAsDateString(): string {
   return `${year}-${month}-${day}`;
 }
 
+const AMOUNT_PATTERN = /^\d+$/;
+
+function parseAmountInput(text: string): number {
+  // Reject anything Number() would otherwise accept loosely (scientific
+  // notation, hex, decimals) — only plain digit strings are a valid 원화 amount.
+  return AMOUNT_PATTERN.test(text) ? Number(text) : NaN;
+}
+
 export default function AddExpenseScreen() {
   const repository = useRepository();
 
@@ -27,6 +35,7 @@ export default function AddExpenseScreen() {
   const [errors, setErrors] = useState<Partial<Record<ExpenseInputField, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [categoriesError, setCategoriesError] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const submittingRef = useRef(false);
 
   useEffect(() => {
@@ -36,7 +45,9 @@ export default function AddExpenseScreen() {
       .then((loaded) => {
         if (!cancelled) {
           setCategories(loaded);
-          setCategoriesError(false);
+          // An empty list also blocks submission (categoryId is required), so
+          // treat it the same as a load failure rather than a normal empty state.
+          setCategoriesError(loaded.length === 0);
         }
       })
       .catch((error) => {
@@ -50,9 +61,10 @@ export default function AddExpenseScreen() {
     };
   }, [repository]);
 
-  const amount = Number(amountText);
+  const amount = parseAmountInput(amountText);
 
   function clearFieldError(field: ExpenseInputField) {
+    setSubmitStatus(null);
     setErrors((prev) => {
       if (!(field in prev)) {
         return prev;
@@ -74,6 +86,7 @@ export default function AddExpenseScreen() {
 
     const validation = validateExpenseInput(input);
     setErrors(validation.errors);
+    setSubmitStatus(null);
     if (!validation.valid || submittingRef.current) {
       return;
     }
@@ -91,10 +104,10 @@ export default function AddExpenseScreen() {
       setCategoryId(null);
       setMemo('');
       setErrors({});
-      Alert.alert('저장 완료', '지출내역이 저장되었습니다.');
+      setSubmitStatus('success');
     } catch (error) {
       console.error('Failed to save expense', error);
-      Alert.alert('저장 실패', '지출내역을 저장하지 못했습니다. 다시 시도해주세요.');
+      setSubmitStatus('error');
     } finally {
       submittingRef.current = false;
       setIsSaving(false);
@@ -139,7 +152,7 @@ export default function AddExpenseScreen() {
         placeholder="예: 12000"
         keyboardType="numeric"
       />
-      {amountText.length > 0 && Number.isFinite(amount) ? (
+      {amountText.length > 0 && Number.isFinite(amount) && amount > 0 ? (
         <Text style={styles.preview}>{formatCurrency(amount)}</Text>
       ) : null}
       {errors.amount ? <Text style={styles.error}>{errors.amount}</Text> : null}
@@ -176,7 +189,10 @@ export default function AddExpenseScreen() {
       <TextInput
         style={[styles.input, styles.memoInput]}
         value={memo}
-        onChangeText={setMemo}
+        onChangeText={(value) => {
+          setMemo(value);
+          setSubmitStatus(null);
+        }}
         placeholder="메모"
         multiline
       />
@@ -184,6 +200,13 @@ export default function AddExpenseScreen() {
       <Pressable style={styles.submitButton} onPress={handleSubmit} disabled={isSaving}>
         <Text style={styles.submitButtonText}>{isSaving ? '저장 중...' : '저장'}</Text>
       </Pressable>
+
+      {submitStatus === 'success' ? (
+        <Text style={styles.statusSuccess}>지출내역이 저장되었습니다.</Text>
+      ) : null}
+      {submitStatus === 'error' ? (
+        <Text style={styles.statusError}>지출내역을 저장하지 못했습니다. 다시 시도해주세요.</Text>
+      ) : null}
     </ScrollView>
   );
 }
@@ -220,4 +243,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  statusSuccess: { marginTop: 12, color: '#2a7d2a', textAlign: 'center' },
+  statusError: { marginTop: 12, color: '#d33', textAlign: 'center' },
 });

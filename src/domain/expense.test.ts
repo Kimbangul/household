@@ -36,6 +36,12 @@ describe('validateExpenseInput', () => {
     expect(result.errors.amount).toBeDefined();
   });
 
+  test('rejects a fractional amount', () => {
+    const result = validateExpenseInput({ ...validInput, amount: 12000.5 });
+    expect(result.valid).toBe(false);
+    expect(result.errors.amount).toBeDefined();
+  });
+
   test('rejects an empty date', () => {
     const result = validateExpenseInput({ ...validInput, date: '' });
     expect(result.valid).toBe(false);
@@ -85,6 +91,18 @@ describe('createExpense', () => {
     const expense = createExpense({ ...validInput, item: '  점심  ', memo: undefined }, 'expense-2');
 
     expect(expense.item).toBe('점심');
+    expect(expense.memo).toBeUndefined();
+  });
+
+  test('trims the memo', () => {
+    const expense = createExpense({ ...validInput, memo: '  동료와 식사  ' }, 'expense-4');
+
+    expect(expense.memo).toBe('동료와 식사');
+  });
+
+  test('omits memo when it is only whitespace', () => {
+    const expense = createExpense({ ...validInput, memo: '   ' }, 'expense-5');
+
     expect(expense.memo).toBeUndefined();
   });
 

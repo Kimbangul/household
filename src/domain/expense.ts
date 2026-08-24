@@ -45,8 +45,8 @@ export function validateExpenseInput(input: ExpenseInput): ValidationResult {
     errors.item = '품목을 입력해주세요.';
   }
 
-  if (!Number.isFinite(input.amount) || input.amount <= 0) {
-    errors.amount = '금액은 0보다 큰 숫자여야 합니다.';
+  if (!Number.isInteger(input.amount) || input.amount <= 0) {
+    errors.amount = '금액은 0보다 큰 정수여야 합니다.';
   }
 
   if (!input.categoryId) {
@@ -70,8 +70,9 @@ export function createExpense(input: ExpenseInput, id: string): Expense {
     categoryId: input.categoryId,
   };
 
-  if (input.memo) {
-    expense.memo = input.memo;
+  const trimmedMemo = input.memo?.trim();
+  if (trimmedMemo) {
+    expense.memo = trimmedMemo;
   }
 
   return expense;
