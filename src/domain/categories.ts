@@ -21,5 +21,5 @@ export function ensureDefaultCategories(existing: Category[]): Category[] {
   if (existing.length > 0) {
     return existing;
   }
-  return DEFAULT_CATEGORIES;
+  return [...DEFAULT_CATEGORIES];
 }

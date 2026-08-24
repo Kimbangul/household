@@ -11,7 +11,14 @@ const STORAGE_KEYS = {
 
 async function readJson<T>(key: string): Promise<T[]> {
   const raw = await AsyncStorage.getItem(key);
-  return raw ? JSON.parse(raw) : [];
+  if (!raw) {
+    return [];
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
 }
 
 async function writeJson<T>(key: string, value: T[]): Promise<void> {

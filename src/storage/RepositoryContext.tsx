@@ -8,10 +8,29 @@ const RepositoryContext = createContext<LedgerRepository | null>(null);
 
 export function RepositoryProvider({ children }: { children: ReactNode }) {
   const [repository] = useState<LedgerRepository>(() => createAsyncStorageRepository());
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    loadCategoriesWithSeed(repository);
+    let cancelled = false;
+
+    loadCategoriesWithSeed(repository)
+      .catch((error) => {
+        console.error('Failed to seed default categories', error);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsReady(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [repository]);
+
+  if (!isReady) {
+    return null;
+  }
 
   return <RepositoryContext.Provider value={repository}>{children}</RepositoryContext.Provider>;
 }
