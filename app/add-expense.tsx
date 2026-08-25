@@ -1,21 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { formatCurrency } from '../src/domain/currency';
 import { createExpense, validateExpenseInput, type ExpenseInputField } from '../src/domain/expense';
 import type { Category } from '../src/domain/types';
+import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import { generateId } from '../src/utils/generateId';
+import { todayAsDateString } from '../src/utils/today';
 
-function todayAsDateString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-const AMOUNT_PATTERN = /^\d+$/;
+// Digit strings longer than this lose precision once converted to a JS
+// number (Number.MAX_SAFE_INTEGER has 16 digits) — no real 원화 amount needs it.
+const AMOUNT_PATTERN = /^\d{1,15}$/;
 
 function parseAmountInput(text: string): number {
   // Reject anything Number() would otherwise accept loosely (scientific
@@ -32,48 +29,40 @@ export default function AddExpenseScreen() {
   const [amountText, setAmountText] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [memo, setMemo] = useState('');
-  const [errors, setErrors] = useState<Partial<Record<ExpenseInputField, string>>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [categoriesError, setCategoriesError] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
-  const submittingRef = useRef(false);
+  const { errors, setErrors, submitStatus, setSubmitStatus, submittingRef, clearFieldError } =
+    useFieldFormState<ExpenseInputField>();
 
-  useEffect(() => {
-    let cancelled = false;
-    repository
-      .getCategories()
-      .then((loaded) => {
-        if (!cancelled) {
-          setCategories(loaded);
-          // An empty list also blocks submission (categoryId is required), so
-          // treat it the same as a load failure rather than a normal empty state.
-          setCategoriesError(loaded.length === 0);
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to load categories', error);
-        if (!cancelled) {
-          setCategoriesError(true);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [repository]);
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      setSubmitStatus(null);
+
+      repository
+        .getCategories()
+        .then((loaded) => {
+          if (!cancelled) {
+            setCategories(loaded);
+            // An empty list also blocks submission (categoryId is required), so
+            // treat it the same as a load failure rather than a normal empty state.
+            setCategoriesError(loaded.length === 0);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to load categories', error);
+          if (!cancelled) {
+            setCategoriesError(true);
+          }
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }, [repository, setSubmitStatus]),
+  );
 
   const amount = parseAmountInput(amountText);
-
-  function clearFieldError(field: ExpenseInputField) {
-    setSubmitStatus(null);
-    setErrors((prev) => {
-      if (!(field in prev)) {
-        return prev;
-      }
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
-  }
 
   async function handleSubmit() {
     const input = {

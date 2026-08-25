@@ -1,3 +1,4 @@
+import { isValidCalendarDate } from './date';
 import type { Expense } from './types';
 
 export interface ExpenseInput {
@@ -13,25 +14,6 @@ export type ExpenseInputField = 'date' | 'item' | 'amount' | 'categoryId';
 export interface ValidationResult {
   valid: boolean;
   errors: Partial<Record<ExpenseInputField, string>>;
-}
-
-const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-function isValidCalendarDate(date: string): boolean {
-  const match = DATE_PATTERN.exec(date);
-  if (!match) {
-    return false;
-  }
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  const parsed = new Date(year, month - 1, day);
-
-  return (
-    parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day
-  );
 }
 
 export function validateExpenseInput(input: ExpenseInput): ValidationResult {
