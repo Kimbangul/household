@@ -8,17 +8,8 @@ import type { Category } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import { generateId } from '../src/utils/generateId';
+import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
-
-// Digit strings longer than this lose precision once converted to a JS
-// number (Number.MAX_SAFE_INTEGER has 16 digits) — no real 원화 amount needs it.
-const AMOUNT_PATTERN = /^\d{1,15}$/;
-
-function parseAmountInput(text: string): number {
-  // Reject anything Number() would otherwise accept loosely (scientific
-  // notation, hex, decimals) — only plain digit strings are a valid 원화 amount.
-  return AMOUNT_PATTERN.test(text) ? Number(text) : NaN;
-}
 
 export default function AddExpenseScreen() {
   const repository = useRepository();
@@ -62,7 +53,7 @@ export default function AddExpenseScreen() {
     }, [repository, setSubmitStatus]),
   );
 
-  const amount = parseAmountInput(amountText);
+  const amount = parseDigitAmount(amountText);
 
   async function handleSubmit() {
     const input = {

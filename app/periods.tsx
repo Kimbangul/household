@@ -1,9 +1,10 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { buildCategoryNameMap, resolveCategoryLabel } from '../src/domain/categoryLookup';
 import { formatCurrency } from '../src/domain/currency';
+import { calculateNetSavings } from '../src/domain/netSavings';
 import { createPeriod, isPastPeriod, suggestNextPeriodStartDate, validatePeriodInput } from '../src/domain/period';
 import type { PeriodInputField } from '../src/domain/period';
 import { getExpensesInPeriod, sumExpenseAmounts } from '../src/domain/periodExpenses';
@@ -11,7 +12,16 @@ import type { Expense, Period } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import { generateId } from '../src/utils/generateId';
+import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
+
+type UpdateIncomeResult = 'success' | 'busy' | 'error';
+
+interface PeriodDetail {
+  expenses: Expense[];
+  total: number;
+  categoryNames: Record<string, string>;
+}
 
 export default function PeriodsScreen() {
   const repository = useRepository();
@@ -127,9 +137,58 @@ export default function PeriodsScreen() {
     }
   }
 
+  async function handleUpdateIncome(id: string, income: number): Promise<UpdateIncomeResult> {
+    // Shares the add/delete mutex: a concurrent mutation would otherwise read
+    // the same stale `periods` snapshot and one write would silently revert
+    // the other. 'busy' is reported back so the caller doesn't show a false
+    // save-failed message for what was really just a declined attempt. The
+    // isLoading/loadError guard mirrors handleAddPeriod's — periods may still
+    // be stale/empty while a load is in flight or failed.
+    if (submittingRef.current || isLoading || loadError) {
+      return 'busy';
+    }
+
+    submittingRef.current = true;
+    const next = periods.map((period) => (period.id === id ? { ...period, income } : period));
+    try {
+      await repository.savePeriods(next);
+      setPeriods(next);
+      return 'success';
+    } catch (error) {
+      console.error('Failed to save income', error);
+      return 'error';
+    } finally {
+      submittingRef.current = false;
+    }
+  }
+
   const today = todayAsDateString();
   const currentPeriods = periods.filter((period) => !isPastPeriod(period, today));
   const pastPeriods = periods.filter((period) => isPastPeriod(period, today));
+
+  const selectedPeriod = periods.find((period) => period.id === selectedPeriodId) ?? null;
+  const selectedPeriodExpenses = useMemo(
+    () => (selectedPeriod ? getExpensesInPeriod(expenses, selectedPeriod) : []),
+    [selectedPeriod, expenses],
+  );
+  const selectedPeriodDetail: PeriodDetail | null = selectedPeriod && {
+    expenses: selectedPeriodExpenses,
+    total: sumExpenseAmounts(selectedPeriodExpenses),
+    categoryNames,
+  };
+
+  function renderPeriodRow(period: Period) {
+    return (
+      <PeriodRow
+        key={period.id}
+        period={period}
+        detail={period.id === selectedPeriodId ? selectedPeriodDetail : null}
+        onToggle={() => setSelectedPeriodId((current) => (current === period.id ? null : period.id))}
+        onDelete={() => handleDeletePeriod(period.id)}
+        onSaveIncome={handleUpdateIncome}
+      />
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -182,59 +241,72 @@ export default function PeriodsScreen() {
       ) : currentPeriods.length === 0 ? (
         <Text style={styles.empty}>등록된 기간이 없습니다.</Text>
       ) : (
-        currentPeriods.map((period) => (
-          <PeriodRow
-            key={period.id}
-            period={period}
-            expenses={expenses}
-            categoryNames={categoryNames}
-            isSelected={selectedPeriodId === period.id}
-            onToggle={() => setSelectedPeriodId((current) => (current === period.id ? null : period.id))}
-            onDelete={() => handleDeletePeriod(period.id)}
-          />
-        ))
+        currentPeriods.map(renderPeriodRow)
       )}
 
       <Text style={[styles.heading, styles.sectionHeading]}>지난 기간</Text>
       {isLoading || loadError ? null : pastPeriods.length === 0 ? (
         <Text style={styles.empty}>지난 기간이 없습니다.</Text>
       ) : (
-        pastPeriods.map((period) => (
-          <PeriodRow
-            key={period.id}
-            period={period}
-            expenses={expenses}
-            categoryNames={categoryNames}
-            isSelected={selectedPeriodId === period.id}
-            onToggle={() => setSelectedPeriodId((current) => (current === period.id ? null : period.id))}
-            onDelete={() => handleDeletePeriod(period.id)}
-          />
-        ))
+        pastPeriods.map(renderPeriodRow)
       )}
     </ScrollView>
   );
 }
 
+type IncomeSaveState =
+  | { status: 'idle' }
+  | { status: 'saving' }
+  | { status: 'invalid'; message: string }
+  | { status: 'success' }
+  | { status: 'error'; message: string };
+
 function PeriodRow({
   period,
-  expenses,
-  categoryNames,
-  isSelected,
+  detail,
   onToggle,
   onDelete,
+  onSaveIncome,
 }: {
   period: Period;
-  expenses: Expense[];
-  categoryNames: Record<string, string>;
-  isSelected: boolean;
+  detail: PeriodDetail | null;
   onToggle: () => void;
   onDelete: () => void;
+  onSaveIncome: (id: string, income: number) => Promise<UpdateIncomeResult>;
 }) {
-  const periodExpenses = useMemo(
-    () => (isSelected ? getExpensesInPeriod(expenses, period) : []),
-    [isSelected, expenses, period],
-  );
-  const total = useMemo(() => sumExpenseAmounts(periodExpenses), [periodExpenses]);
+  const [incomeText, setIncomeText] = useState(String(period.income));
+  const [saveState, setSaveState] = useState<IncomeSaveState>({ status: 'idle' });
+  // Tracks whether the user has edited the field since it was last synced
+  // from period.income, so a save that resolves after a newer keystroke
+  // doesn't clobber the not-yet-saved text.
+  const incomeTouchedRef = useRef(false);
+
+  useEffect(() => {
+    if (!incomeTouchedRef.current) {
+      setIncomeText(String(period.income));
+    }
+  }, [period.income]);
+
+  async function handleSaveIncome() {
+    const income = parseDigitAmount(incomeText);
+    if (Number.isNaN(income)) {
+      setSaveState({ status: 'invalid', message: '수입은 0 이상의 정수여야 합니다.' });
+      return;
+    }
+
+    setSaveState({ status: 'saving' });
+    const result = await onSaveIncome(period.id, income);
+    if (result === 'success') {
+      incomeTouchedRef.current = false;
+      setSaveState({ status: 'success' });
+    } else if (result === 'busy') {
+      setSaveState({ status: 'invalid', message: '다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요.' });
+    } else {
+      setSaveState({ status: 'error', message: '저장하지 못했습니다. 다시 시도해주세요.' });
+    }
+  }
+
+  const netSavings = detail ? calculateNetSavings(period.income, detail.total) : 0;
 
   return (
     <View>
@@ -248,18 +320,48 @@ function PeriodRow({
           <Text style={styles.deleteText}>삭제</Text>
         </Pressable>
       </View>
-      {isSelected ? (
+      {detail ? (
         <View style={styles.detail}>
-          <Text style={styles.detailTotal}>합계 {formatCurrency(total)}</Text>
-          {periodExpenses.length === 0 ? (
+          <Text style={styles.label}>수입</Text>
+          <View style={styles.incomeRow}>
+            <TextInput
+              style={[styles.input, styles.incomeInput]}
+              value={incomeText}
+              onChangeText={(value) => {
+                setIncomeText(value);
+                incomeTouchedRef.current = true;
+                setSaveState({ status: 'idle' });
+              }}
+              placeholder="예: 3000000"
+              keyboardType="numeric"
+            />
+            <Pressable
+              style={styles.incomeSaveButton}
+              onPress={handleSaveIncome}
+              disabled={saveState.status === 'saving'}
+            >
+              <Text style={styles.incomeSaveButtonText}>
+                {saveState.status === 'saving' ? '저장 중...' : '저장'}
+              </Text>
+            </Pressable>
+          </View>
+          {saveState.status === 'invalid' || saveState.status === 'error' ? (
+            <Text style={styles.error}>{saveState.message}</Text>
+          ) : null}
+          {saveState.status === 'success' ? (
+            <Text style={styles.statusSuccess}>수입이 저장되었습니다.</Text>
+          ) : null}
+          <Text style={styles.detailTotal}>순저축 {formatCurrency(netSavings)}</Text>
+          <Text style={styles.detailTotal}>지출 합계 {formatCurrency(detail.total)}</Text>
+          {detail.expenses.length === 0 ? (
             <Text style={styles.empty}>이 기간에 속하는 지출내역이 없습니다.</Text>
           ) : (
-            periodExpenses.map((expense) => (
+            detail.expenses.map((expense) => (
               <View key={expense.id} style={styles.detailRow}>
                 <View style={styles.rowMain}>
                   <Text style={styles.item}>{expense.item}</Text>
                   <Text style={styles.meta}>
-                    {expense.date} · {resolveCategoryLabel(expense.categoryId, categoryNames)}
+                    {expense.date} · {resolveCategoryLabel(expense.categoryId, detail.categoryNames)}
                   </Text>
                 </View>
                 <Text style={styles.amount}>{formatCurrency(expense.amount)}</Text>
@@ -315,6 +417,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   detailTotal: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  incomeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  incomeInput: { flex: 1, marginTop: 0 },
+  incomeSaveButton: {
+    backgroundColor: '#333',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  incomeSaveButtonText: { color: '#fff', fontWeight: '600' },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
