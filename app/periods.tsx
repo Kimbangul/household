@@ -1,10 +1,13 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { buildCategoryNameMap, resolveCategoryLabel } from '../src/domain/categoryLookup';
+import { formatCurrency } from '../src/domain/currency';
 import { createPeriod, isPastPeriod, suggestNextPeriodStartDate, validatePeriodInput } from '../src/domain/period';
 import type { PeriodInputField } from '../src/domain/period';
-import type { Period } from '../src/domain/types';
+import { getExpensesInPeriod, sumExpenseAmounts } from '../src/domain/periodExpenses';
+import type { Expense, Period } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import { generateId } from '../src/utils/generateId';
@@ -14,9 +17,12 @@ export default function PeriodsScreen() {
   const repository = useRepository();
 
   const [periods, setPeriods] = useState<Period[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -33,15 +39,16 @@ export default function PeriodsScreen() {
       setIsLoading(true);
       setSubmitStatus(null);
 
-      repository
-        .getPeriods()
-        .then((loaded) => {
+      Promise.all([repository.getPeriods(), repository.getExpenses(), repository.getCategories()])
+        .then(([loadedPeriods, loadedExpenses, loadedCategories]) => {
           if (cancelled) {
             return;
           }
-          setPeriods(loaded);
+          setPeriods(loadedPeriods);
+          setExpenses(loadedExpenses);
+          setCategoryNames(buildCategoryNameMap(loadedCategories));
           if (!startDateTouchedRef.current) {
-            setStartDate(suggestNextPeriodStartDate(loaded, todayAsDateString()));
+            setStartDate(suggestNextPeriodStartDate(loadedPeriods, todayAsDateString()));
           }
           setLoadError(false);
         })
@@ -68,7 +75,10 @@ export default function PeriodsScreen() {
     const validation = validatePeriodInput(input);
     setErrors(validation.errors);
     setSubmitStatus(null);
-    if (!validation.valid || submittingRef.current) {
+    // periods may still be stale/empty (initial load, or a failed load of the
+    // unrelated expenses/categories that share this screen's Promise.all) —
+    // saving now would overwrite on-disk periods with that stale snapshot.
+    if (!validation.valid || submittingRef.current || isLoading || loadError) {
       return;
     }
 
@@ -105,6 +115,7 @@ export default function PeriodsScreen() {
     try {
       await repository.savePeriods(next);
       setPeriods(next);
+      setSelectedPeriodId((current) => (current === id ? null : current));
       if (!startDateTouchedRef.current) {
         setStartDate(suggestNextPeriodStartDate(next, todayAsDateString()));
       }
@@ -151,7 +162,11 @@ export default function PeriodsScreen() {
       />
       {errors.endDate ? <Text style={styles.error}>{errors.endDate}</Text> : null}
 
-      <Pressable style={styles.submitButton} onPress={handleAddPeriod} disabled={isSaving}>
+      <Pressable
+        style={styles.submitButton}
+        onPress={handleAddPeriod}
+        disabled={isSaving || isLoading || loadError}
+      >
         <Text style={styles.submitButtonText}>{isSaving ? '추가 중...' : '기간 추가'}</Text>
       </Pressable>
 
@@ -168,7 +183,15 @@ export default function PeriodsScreen() {
         <Text style={styles.empty}>등록된 기간이 없습니다.</Text>
       ) : (
         currentPeriods.map((period) => (
-          <PeriodRow key={period.id} period={period} onDelete={() => handleDeletePeriod(period.id)} />
+          <PeriodRow
+            key={period.id}
+            period={period}
+            expenses={expenses}
+            categoryNames={categoryNames}
+            isSelected={selectedPeriodId === period.id}
+            onToggle={() => setSelectedPeriodId((current) => (current === period.id ? null : period.id))}
+            onDelete={() => handleDeletePeriod(period.id)}
+          />
         ))
       )}
 
@@ -177,22 +200,74 @@ export default function PeriodsScreen() {
         <Text style={styles.empty}>지난 기간이 없습니다.</Text>
       ) : (
         pastPeriods.map((period) => (
-          <PeriodRow key={period.id} period={period} onDelete={() => handleDeletePeriod(period.id)} />
+          <PeriodRow
+            key={period.id}
+            period={period}
+            expenses={expenses}
+            categoryNames={categoryNames}
+            isSelected={selectedPeriodId === period.id}
+            onToggle={() => setSelectedPeriodId((current) => (current === period.id ? null : period.id))}
+            onDelete={() => handleDeletePeriod(period.id)}
+          />
         ))
       )}
     </ScrollView>
   );
 }
 
-function PeriodRow({ period, onDelete }: { period: Period; onDelete: () => void }) {
+function PeriodRow({
+  period,
+  expenses,
+  categoryNames,
+  isSelected,
+  onToggle,
+  onDelete,
+}: {
+  period: Period;
+  expenses: Expense[];
+  categoryNames: Record<string, string>;
+  isSelected: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+}) {
+  const periodExpenses = useMemo(
+    () => (isSelected ? getExpensesInPeriod(expenses, period) : []),
+    [isSelected, expenses, period],
+  );
+  const total = useMemo(() => sumExpenseAmounts(periodExpenses), [periodExpenses]);
+
   return (
-    <View style={styles.row}>
-      <Text style={styles.rowText}>
-        {period.startDate} ~ {period.endDate}
-      </Text>
-      <Pressable onPress={onDelete}>
-        <Text style={styles.deleteText}>삭제</Text>
-      </Pressable>
+    <View>
+      <View style={styles.row}>
+        <Pressable style={styles.rowMain} onPress={onToggle}>
+          <Text style={styles.rowText}>
+            {period.startDate} ~ {period.endDate}
+          </Text>
+        </Pressable>
+        <Pressable onPress={onDelete}>
+          <Text style={styles.deleteText}>삭제</Text>
+        </Pressable>
+      </View>
+      {isSelected ? (
+        <View style={styles.detail}>
+          <Text style={styles.detailTotal}>합계 {formatCurrency(total)}</Text>
+          {periodExpenses.length === 0 ? (
+            <Text style={styles.empty}>이 기간에 속하는 지출내역이 없습니다.</Text>
+          ) : (
+            periodExpenses.map((expense) => (
+              <View key={expense.id} style={styles.detailRow}>
+                <View style={styles.rowMain}>
+                  <Text style={styles.item}>{expense.item}</Text>
+                  <Text style={styles.meta}>
+                    {expense.date} · {resolveCategoryLabel(expense.categoryId, categoryNames)}
+                  </Text>
+                </View>
+                <Text style={styles.amount}>{formatCurrency(expense.amount)}</Text>
+              </View>
+            ))
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -229,6 +304,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
+  rowMain: { flexShrink: 1, flexGrow: 1 },
   rowText: { fontSize: 16 },
   deleteText: { color: '#d33' },
+  detail: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    backgroundColor: '#f7f7f7',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  detailTotal: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  item: { fontSize: 14 },
+  meta: { fontSize: 12, color: '#888', marginTop: 2 },
+  amount: { fontSize: 14, fontWeight: '600' },
 });

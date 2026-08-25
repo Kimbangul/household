@@ -2,9 +2,10 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
+import { buildCategoryNameMap, resolveCategoryLabel } from '../src/domain/categoryLookup';
 import { formatCurrency } from '../src/domain/currency';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
-import type { Category, Expense } from '../src/domain/types';
+import type { Expense } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
 
 const RECENT_EXPENSE_LIMIT = 20;
@@ -27,12 +28,7 @@ export default function MainScreen() {
             return;
           }
           setRecentExpenses(getRecentExpenses(expenses, RECENT_EXPENSE_LIMIT));
-          setCategoryNames(
-            categories.reduce<Record<string, string>>((names, category: Category) => {
-              names[category.id] = category.name;
-              return names;
-            }, {}),
-          );
+          setCategoryNames(buildCategoryNameMap(categories));
           setLoadError(false);
         })
         .catch((error) => {
@@ -53,13 +49,6 @@ export default function MainScreen() {
     }, [repository]),
   );
 
-  function categoryLabel(categoryId: string | null): string {
-    if (!categoryId) {
-      return '미분류';
-    }
-    return categoryNames[categoryId] ?? '미분류';
-  }
-
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>최근 지출</Text>
@@ -76,7 +65,7 @@ export default function MainScreen() {
               <View style={styles.rowMain}>
                 <Text style={styles.item}>{item.item}</Text>
                 <Text style={styles.meta}>
-                  {item.date} · {categoryLabel(item.categoryId)}
+                  {item.date} · {resolveCategoryLabel(item.categoryId, categoryNames)}
                 </Text>
               </View>
               <Text style={styles.amount}>{formatCurrency(item.amount)}</Text>
