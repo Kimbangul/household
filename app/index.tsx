@@ -178,11 +178,12 @@ const SectionHeading = styled(Heading)`
 
 const ErrorText = styled.Text`
   color: ${(props) => props.theme.danger};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const ComparisonBox = styled.View`
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 14px;
   gap: 4px;
   background-color: ${(props) => props.theme.card};
 `;
@@ -190,10 +191,11 @@ const ComparisonBox = styled.View`
 const ComparisonPeriodsText = styled.Text`
   font-size: 12px;
   color: ${(props) => props.theme.textMuted};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const ComparisonAmountText = styled.Text`
   font-size: 18px;
-  font-weight: 600;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;

@@ -44,4 +44,5 @@ const CategoryChip = styled.Pressable<{ $selected: boolean }>`
 
 const CategoryChipText = styled.Text<{ $selected: boolean }>`
   color: ${(props) => (props.$selected ? props.theme.onPrimary : props.theme.text)};
+  font-family: ${(props) => props.theme.fontRegular};
 `;

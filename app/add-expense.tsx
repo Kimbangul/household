@@ -249,6 +249,7 @@ export default function AddExpenseScreen() {
 const PreviewText = styled.Text`
   margin-top: 4px;
   color: ${(props) => props.theme.textMuted};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const ModeToggleRow = styled.View`
@@ -259,7 +260,7 @@ const ModeToggleRow = styled.View`
 const ModeToggleButton = styled(Pressable)<{ $active: boolean }>`
   flex: 1;
   border-width: 1px;
-  border-radius: 8px;
+  border-radius: 14px;
   padding-vertical: 10px;
   align-items: center;
   border-color: ${(props) => (props.$active ? props.theme.primary : props.theme.border)};
@@ -267,6 +268,6 @@ const ModeToggleButton = styled(Pressable)<{ $active: boolean }>`
 `;
 
 const ModeToggleText = styled.Text<{ $active: boolean }>`
-  font-weight: 600;
   color: ${(props) => (props.$active ? props.theme.onPrimary : props.theme.text)};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;

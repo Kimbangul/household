@@ -198,10 +198,11 @@ const SummaryRow = styled(Pressable)`
 const ItemText = styled.Text`
   font-size: 14px;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const AmountText = styled.Text`
   font-size: 14px;
-  font-weight: 600;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;

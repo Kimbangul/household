@@ -98,9 +98,11 @@ const LegendLabel = styled.Text`
   flex: 1;
   font-size: 13px;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const LegendValue = styled.Text`
   font-size: 13px;
   color: ${(props) => props.theme.textMuted};
+  font-family: ${(props) => props.theme.fontRegular};
 `;

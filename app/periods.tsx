@@ -468,31 +468,33 @@ const PeriodTogglePressable = styled(Pressable)`
 const PeriodRangeText = styled.Text`
   font-size: 16px;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const DeleteText = styled.Text`
   color: ${(props) => props.theme.danger};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const DetailBox = styled.View`
   padding-vertical: 8px;
   padding-horizontal: 8px;
-  border-radius: 8px;
+  border-radius: 14px;
   margin-bottom: 8px;
   background-color: ${(props) => props.theme.card};
 `;
 
 const DetailTotalText = styled.Text`
   font-size: 14px;
-  font-weight: 600;
   margin-bottom: 4px;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 const SubsectionHeading = styled.Text`
   font-size: 14px;
-  font-weight: 600;
   margin-top: 12px;
   margin-bottom: 4px;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;

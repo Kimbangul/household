@@ -18,6 +18,7 @@ export const MetaText = styled.Text`
   font-size: 12px;
   margin-top: 2px;
   color: ${(props) => props.theme.textMuted};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 export const EditForm = styled.View`
@@ -34,32 +35,33 @@ export const CompactFieldLabel = styled(FieldLabel)`
 export const RowStatusSuccessText = styled.Text`
   margin-top: 8px;
   color: ${(props) => props.theme.success};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 export const ActionRow = styled.View`
-  flex-direction: row;
+  flex-direction: column;
   gap: 8px;
   margin-top: 16px;
 `;
 
 export const SaveButton = styled(Pressable)`
   flex: 1;
-  border-radius: 8px;
+  border-radius: 14px;
   padding-vertical: 14px;
   align-items: center;
   background-color: ${(props) => props.theme.primary};
 `;
 
 export const SaveButtonText = styled.Text`
-  font-weight: 600;
   font-size: 16px;
   color: ${(props) => props.theme.onPrimary};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 export const DeleteButton = styled(Pressable)`
   flex: 1;
   border-width: 1px;
-  border-radius: 8px;
+  border-radius: 14px;
   padding-vertical: 14px;
   align-items: center;
   background-color: ${(props) => props.theme.background};
@@ -67,7 +69,7 @@ export const DeleteButton = styled(Pressable)`
 `;
 
 export const DeleteButtonText = styled.Text`
-  font-weight: 600;
   font-size: 16px;
   color: ${(props) => props.theme.danger};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;

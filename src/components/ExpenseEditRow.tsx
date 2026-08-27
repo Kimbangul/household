@@ -221,10 +221,11 @@ const SummaryRow = styled(Pressable)<{ $compact: boolean }>`
 const ItemText = styled.Text<{ $compact: boolean }>`
   font-size: ${(props) => (props.$compact ? '14px' : '16px')};
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const AmountText = styled.Text<{ $compact: boolean }>`
   font-size: ${(props) => (props.$compact ? '14px' : '16px')};
-  font-weight: 600;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;

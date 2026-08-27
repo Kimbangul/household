@@ -1,10 +1,15 @@
+import { NotoSansKR_400Regular, NotoSansKR_600SemiBold, useFonts } from '@expo-google-fonts/noto-sans-kr';
 import { DarkTheme, DefaultTheme, Tabs, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components/native';
 
 import { RepositoryProvider } from '../src/storage/RepositoryContext';
 import { DarkModeProvider, useDarkMode } from '../src/theme/DarkModeContext';
 import { useAppColors } from '../src/theme/useAppColors';
+
+SplashScreen.preventAutoHideAsync();
 
 // useAppColors() reads expo-router's navigation theme via useTheme(), so it
 // must run in a component nested inside NavigationThemeProvider, not the one
@@ -36,11 +41,26 @@ function ThemedTabs() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    NotoSansKR_400Regular,
+    NotoSansKR_600SemiBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  // RepositoryProvider/DarkModeProvider mount unconditionally so their own
+  // async readiness work (category seeding, income migration, loading the
+  // dark-mode setting) starts immediately in parallel with font loading,
+  // rather than waiting for fonts first — only the final visible content is
+  // gated on fontsLoaded, so startup latency is max(fonts, repository), not
+  // their sum.
   return (
     <RepositoryProvider>
-      <DarkModeProvider>
-        <ThemedTabs />
-      </DarkModeProvider>
+      <DarkModeProvider>{fontsLoaded || fontError ? <ThemedTabs /> : null}</DarkModeProvider>
     </RepositoryProvider>
   );
 }

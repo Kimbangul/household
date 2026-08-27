@@ -14,8 +14,8 @@ export const Screen = styled(ScrollView)`
 
 export const Heading = styled.Text`
   font-size: 20px;
-  font-weight: 600;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 export const SectionHeading = styled(Heading)`
@@ -25,18 +25,19 @@ export const SectionHeading = styled(Heading)`
 
 export const FieldLabel = styled.Text`
   font-size: 14px;
-  font-weight: 600;
   margin-top: 12px;
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 export const FieldInput = styled(TextInput)`
   border-width: 1px;
-  border-radius: 8px;
+  border-radius: 14px;
   padding: 10px;
   margin-top: 4px;
   border-color: ${(props) => props.theme.border};
   color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 export const MemoInput = styled(FieldInput)`
@@ -47,15 +48,17 @@ export const MemoInput = styled(FieldInput)`
 export const FieldError = styled.Text`
   margin-top: 4px;
   color: ${(props) => props.theme.danger};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 export const EmptyText = styled.Text`
   color: ${(props) => props.theme.textMuted};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 export const SubmitButton = styled(Pressable)`
   margin-top: 24px;
-  border-radius: 8px;
+  border-radius: 14px;
   padding-vertical: 14px;
   align-items: center;
   background-color: ${(props) => props.theme.primary};
@@ -63,18 +66,20 @@ export const SubmitButton = styled(Pressable)`
 
 export const SubmitButtonText = styled.Text`
   color: ${(props) => props.theme.onPrimary};
-  font-weight: 600;
   font-size: 16px;
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 export const StatusSuccessText = styled.Text`
   margin-top: 12px;
   text-align: center;
   color: ${(props) => props.theme.success};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 export const StatusErrorText = styled.Text`
   margin-top: 12px;
   text-align: center;
   color: ${(props) => props.theme.danger};
+  font-family: ${(props) => props.theme.fontRegular};
 `;
