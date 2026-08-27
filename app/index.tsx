@@ -1,6 +1,5 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView } from 'react-native';
 import styled from 'styled-components/native';
 
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
@@ -12,6 +11,7 @@ import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
+import { EmptyText, Heading, Screen } from '../src/theme/styledPrimitives';
 import { todayAsDateString } from '../src/utils/today';
 
 const RECENT_EXPENSE_LIMIT = 20;
@@ -119,7 +119,7 @@ export default function MainScreen() {
 
   return (
     <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
-      <Heading>최근 기간 대비 지출</Heading>
+      <MainHeading>최근 기간 대비 지출</MainHeading>
       {isLoading ? null : loadError ? (
         <ErrorText>기간을 불러오지 못했습니다.</ErrorText>
       ) : periodComparison ? (
@@ -167,23 +167,13 @@ export default function MainScreen() {
   );
 }
 
-const Screen = styled(ScrollView)`
-  background-color: ${(props) => props.theme.background};
-`;
-
-const Heading = styled.Text`
-  font-size: 20px;
-  font-weight: 600;
+const MainHeading = styled(Heading)`
   margin-bottom: 12px;
-  color: ${(props) => props.theme.text};
 `;
 
 const SectionHeading = styled(Heading)`
   margin-top: 24px;
-`;
-
-const EmptyText = styled.Text`
-  color: ${(props) => props.theme.textMuted};
+  margin-bottom: 12px;
 `;
 
 const ErrorText = styled.Text`

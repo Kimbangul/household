@@ -1,6 +1,5 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, TextInput } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
 import { CategoryChipPicker } from '../src/components/CategoryChipPicker';
@@ -9,6 +8,17 @@ import { createExpense, validateExpenseInput, type ExpenseInputField } from '../
 import type { Category } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
+import {
+  FieldError,
+  FieldInput,
+  FieldLabel,
+  MemoInput,
+  Screen,
+  StatusErrorText,
+  StatusSuccessText,
+  SubmitButton,
+  SubmitButtonText,
+} from '../src/theme/styledPrimitives';
 import { generateId } from '../src/utils/generateId';
 import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
@@ -181,63 +191,7 @@ export default function AddExpenseScreen() {
   );
 }
 
-const Screen = styled(ScrollView)`
-  background-color: ${(props) => props.theme.background};
-`;
-
-const FieldLabel = styled.Text`
-  font-size: 14px;
-  font-weight: 600;
-  margin-top: 12px;
-  color: ${(props) => props.theme.text};
-`;
-
-const FieldInput = styled(TextInput)`
-  border-width: 1px;
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 4px;
-  border-color: ${(props) => props.theme.border};
-  color: ${(props) => props.theme.text};
-`;
-
-const MemoInput = styled(FieldInput)`
-  min-height: 60px;
-  text-align-vertical: top;
-`;
-
 const PreviewText = styled.Text`
   margin-top: 4px;
   color: ${(props) => props.theme.textMuted};
-`;
-
-const FieldError = styled.Text`
-  margin-top: 4px;
-  color: ${(props) => props.theme.danger};
-`;
-
-const SubmitButton = styled(Pressable)`
-  margin-top: 24px;
-  border-radius: 8px;
-  padding-vertical: 14px;
-  align-items: center;
-  background-color: ${(props) => props.theme.primary};
-`;
-
-const SubmitButtonText = styled.Text`
-  color: ${(props) => props.theme.onPrimary};
-  font-weight: 600;
-  font-size: 16px;
-`;
-
-const StatusSuccessText = styled.Text`
-  margin-top: 12px;
-  text-align: center;
-  color: ${(props) => props.theme.success};
-`;
-
-const StatusErrorText = styled.Text`
-  margin-top: 12px;
-  text-align: center;
-  color: ${(props) => props.theme.danger};
 `;

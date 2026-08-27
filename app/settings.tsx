@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
 import {
@@ -15,6 +15,18 @@ import type { Category, Expense } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import { useDarkMode } from '../src/theme/DarkModeContext';
+import {
+  FieldError,
+  FieldInput,
+  FieldLabel,
+  Screen,
+  SectionHeading,
+  StatusErrorText,
+  StatusSuccessText,
+  SubmitButton,
+  SubmitButtonText,
+  Heading,
+} from '../src/theme/styledPrimitives';
 import { generateId } from '../src/utils/generateId';
 
 const CONTENT_CONTAINER_STYLE = { padding: 16, gap: 4 };
@@ -174,68 +186,6 @@ export default function SettingsScreen() {
     </Screen>
   );
 }
-
-const Screen = styled(ScrollView)`
-  background-color: ${(props) => props.theme.background};
-`;
-
-const Heading = styled.Text`
-  font-size: 20px;
-  font-weight: 600;
-  color: ${(props) => props.theme.text};
-`;
-
-const SectionHeading = styled(Heading)`
-  margin-top: 24px;
-  margin-bottom: 8px;
-`;
-
-const FieldLabel = styled.Text`
-  font-size: 14px;
-  font-weight: 600;
-  margin-top: 12px;
-  color: ${(props) => props.theme.text};
-`;
-
-const FieldInput = styled(TextInput)`
-  border-width: 1px;
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 4px;
-  border-color: ${(props) => props.theme.border};
-  color: ${(props) => props.theme.text};
-`;
-
-const FieldError = styled.Text`
-  margin-top: 4px;
-  color: ${(props) => props.theme.danger};
-`;
-
-const SubmitButton = styled(Pressable)`
-  margin-top: 24px;
-  border-radius: 8px;
-  padding-vertical: 14px;
-  align-items: center;
-  background-color: ${(props) => props.theme.primary};
-`;
-
-const SubmitButtonText = styled.Text`
-  color: ${(props) => props.theme.onPrimary};
-  font-weight: 600;
-  font-size: 16px;
-`;
-
-const StatusSuccessText = styled.Text`
-  margin-top: 12px;
-  text-align: center;
-  color: ${(props) => props.theme.success};
-`;
-
-const StatusErrorText = styled.Text`
-  margin-top: 12px;
-  text-align: center;
-  color: ${(props) => props.theme.danger};
-`;
 
 const Row = styled(View)`
   flex-direction: row;

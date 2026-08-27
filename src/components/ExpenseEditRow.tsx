@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
 import { resolveCategoryLabel } from '../domain/categoryLookup';
 import { formatCurrency } from '../domain/currency';
 import { validateExpenseInput, type ExpenseInput, type ExpenseInputField } from '../domain/expense';
 import type { Category, Expense } from '../domain/types';
+import { FieldError, FieldInput, FieldLabel as BaseFieldLabel, MemoInput } from '../theme/styledPrimitives';
 import { parseDigitAmount } from '../utils/parseDigitAmount';
 import { CategoryChipPicker } from './CategoryChipPicker';
 
@@ -232,30 +233,10 @@ const EditForm = styled.View`
   gap: 4px;
 `;
 
-const FieldLabel = styled.Text`
-  font-size: 14px;
-  font-weight: 600;
+// This screen's edit form sits inside an already-padded row, so it needs a
+// tighter top margin (8px) than the shared FieldLabel's default (12px).
+const FieldLabel = styled(BaseFieldLabel)`
   margin-top: 8px;
-  color: ${(props) => props.theme.text};
-`;
-
-const FieldInput = styled(TextInput)`
-  border-width: 1px;
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 4px;
-  border-color: ${(props) => props.theme.border};
-  color: ${(props) => props.theme.text};
-`;
-
-const MemoInput = styled(FieldInput)`
-  min-height: 60px;
-  text-align-vertical: top;
-`;
-
-const FieldError = styled.Text`
-  margin-top: 4px;
-  color: ${(props) => props.theme.danger};
 `;
 
 const StatusSuccessText = styled.Text`
