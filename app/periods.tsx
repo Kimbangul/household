@@ -2,8 +2,10 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { CategoryPieChart } from '../src/components/CategoryPieChart';
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
+import { aggregateExpensesByCategory, type CategoryStat } from '../src/domain/categoryStats';
 import { formatCurrency } from '../src/domain/currency';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
 import { calculateNetSavings } from '../src/domain/netSavings';
@@ -23,6 +25,7 @@ interface PeriodDetail {
   expenses: Expense[];
   total: number;
   categoryNames: Record<string, string>;
+  categoryStats: CategoryStat[];
 }
 
 export default function PeriodsScreen() {
@@ -222,6 +225,7 @@ export default function PeriodsScreen() {
     expenses: selectedPeriodExpenses,
     total: sumExpenseAmounts(selectedPeriodExpenses),
     categoryNames,
+    categoryStats: aggregateExpensesByCategory(selectedPeriodExpenses, categoryNames),
   };
 
   function renderPeriodRow(period: Period) {
@@ -421,19 +425,22 @@ function PeriodRow({
           {detail.expenses.length === 0 ? (
             <Text style={styles.empty}>이 기간에 속하는 지출내역이 없습니다.</Text>
           ) : (
-            detail.expenses.map((expense) => (
-              <ExpenseEditRow
-                key={expense.id}
-                expense={expense}
-                categories={categories}
-                categoryNames={detail.categoryNames}
-                isExpanded={expense.id === selectedExpenseId}
-                onToggle={() => onToggleExpense(expense.id)}
-                onSave={onSaveExpense}
-                onDelete={onDeleteExpense}
-                variant="compact"
-              />
-            ))
+            <>
+              <CategoryPieChart stats={detail.categoryStats} />
+              {detail.expenses.map((expense) => (
+                <ExpenseEditRow
+                  key={expense.id}
+                  expense={expense}
+                  categories={categories}
+                  categoryNames={detail.categoryNames}
+                  isExpanded={expense.id === selectedExpenseId}
+                  onToggle={() => onToggleExpense(expense.id)}
+                  onSave={onSaveExpense}
+                  onDelete={onDeleteExpense}
+                  variant="compact"
+                />
+              ))}
+            </>
           )}
         </View>
       ) : null}
