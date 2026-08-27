@@ -1,4 +1,4 @@
-import { isPastPeriod } from './period';
+import { isFuturePeriod } from './period';
 import { getExpensesInPeriod, sumExpenseAmounts } from './periodExpenses';
 import type { Expense, Period } from './types';
 
@@ -10,10 +10,11 @@ export interface PeriodComparison {
   difference: number;
 }
 
-// Most-recently-ended first; ties (same endDate) fall back to the later
-// startDate, so a shorter period that ended on the same day as a longer one
-// is treated as the more recent of the two.
-function byMostRecentlyEnded(a: Period, b: Period): number {
+// Latest endDate first (not necessarily "ended" — an eligible period may
+// still be in progress). Ties (same endDate) fall back to the later
+// startDate, so a shorter period ending the same day as a longer one is
+// treated as the more recent of the two.
+function byLatestEndDate(a: Period, b: Period): number {
   if (a.endDate !== b.endDate) {
     return a.endDate < b.endDate ? 1 : -1;
   }
@@ -25,15 +26,19 @@ function byMostRecentlyEnded(a: Period, b: Period): number {
 // (e.g. "이번 주" and "이번 달" open at once — see docs/adr/0001). Comparing
 // "the two most recently ended periods" can therefore pair periods of
 // unrelated scope/duration if the user happens to have such periods open;
-// this function implements the literal ticket spec (#10) as written and
-// doesn't attempt to detect or exclude that case.
+// this function doesn't attempt to detect or exclude that case.
+//
+// An in-progress period (already started, not yet ended) is eligible too —
+// only periods that haven't started yet are excluded. A currently-open
+// period's total is "so far", not final, but users expect to see how the
+// current period compares to the last one before it has even ended.
 export function compareRecentPeriods(periods: Period[], expenses: Expense[], today: string): PeriodComparison | null {
-  const endedPeriods = periods.filter((period) => isPastPeriod(period, today));
-  if (endedPeriods.length < 2) {
+  const eligiblePeriods = periods.filter((period) => !isFuturePeriod(period, today));
+  if (eligiblePeriods.length < 2) {
     return null;
   }
 
-  const [latest, previous] = [...endedPeriods].sort(byMostRecentlyEnded);
+  const [latest, previous] = [...eligiblePeriods].sort(byLatestEndDate);
 
   const latestTotal = sumExpenseAmounts(getExpensesInPeriod(expenses, latest));
   const previousTotal = sumExpenseAmounts(getExpensesInPeriod(expenses, previous));

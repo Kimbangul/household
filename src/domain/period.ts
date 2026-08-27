@@ -55,3 +55,7 @@ export function suggestNextPeriodStartDate(periods: Period[], today: string): st
 export function isPastPeriod(period: Period, today: string): boolean {
   return period.endDate < today;
 }
+
+export function isFuturePeriod(period: Period, today: string): boolean {
+  return period.startDate > today;
+}

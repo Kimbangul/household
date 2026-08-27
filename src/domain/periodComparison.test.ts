@@ -16,12 +16,12 @@ describe('compareRecentPeriods', () => {
     expect(compareRecentPeriods([], [], TODAY)).toBeNull();
   });
 
-  test('returns null when there is only one ended period', () => {
+  test('returns null when there is only one eligible (already-started) period', () => {
     const periods = [period({ id: 'p1', startDate: '2026-07-01', endDate: '2026-07-31' })];
     expect(compareRecentPeriods(periods, [], TODAY)).toBeNull();
   });
 
-  test('picks the two ended periods with the latest end dates, regardless of input order', () => {
+  test('picks the two eligible periods with the latest end dates, regardless of input order', () => {
     const periods = [
       period({ id: 'oldest', startDate: '2026-05-01', endDate: '2026-05-31' }),
       period({ id: 'latest', startDate: '2026-07-01', endDate: '2026-07-31' }),
@@ -32,21 +32,31 @@ describe('compareRecentPeriods', () => {
     expect(result?.previous.id).toBe('previous');
   });
 
-  test('excludes periods that have not ended yet, even if their end date is the latest', () => {
+  test('includes an in-progress period (already started, not yet ended) as the latest', () => {
+    const periods = [
+      period({ id: 'ended', startDate: '2026-07-28', endDate: '2026-08-26' }),
+      period({ id: 'in-progress', startDate: '2026-08-27', endDate: '2026-09-27' }),
+    ];
+    const result = compareRecentPeriods(periods, [], TODAY);
+    expect(result?.latest.id).toBe('in-progress');
+    expect(result?.previous.id).toBe('ended');
+  });
+
+  test('excludes a period that has not started yet, even if its end date is the latest', () => {
     const periods = [
       period({ id: 'ended-1', startDate: '2026-06-01', endDate: '2026-06-30' }),
       period({ id: 'ended-2', startDate: '2026-07-01', endDate: '2026-07-31' }),
-      period({ id: 'not-ended-yet', startDate: '2026-08-01', endDate: '2026-09-30' }),
+      period({ id: 'not-started-yet', startDate: '2026-09-01', endDate: '2026-09-30' }),
     ];
     const result = compareRecentPeriods(periods, [], TODAY);
     expect(result?.latest.id).toBe('ended-2');
     expect(result?.previous.id).toBe('ended-1');
   });
 
-  test('returns null when fewer than two periods have ended, even with other periods present', () => {
+  test('returns null when only one period has started, even with an upcoming period present', () => {
     const periods = [
       period({ id: 'ended', startDate: '2026-07-01', endDate: '2026-07-31' }),
-      period({ id: 'not-ended-yet', startDate: '2026-08-01', endDate: '2026-09-30' }),
+      period({ id: 'not-started-yet', startDate: '2026-09-01', endDate: '2026-09-30' }),
     ];
     expect(compareRecentPeriods(periods, [], TODAY)).toBeNull();
   });

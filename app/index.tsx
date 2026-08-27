@@ -6,6 +6,7 @@ import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/Expe
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
 import { formatCurrency } from '../src/domain/currency';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
+import { isPastPeriod } from '../src/domain/period';
 import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
 import type { Category, Expense, Period } from '../src/domain/types';
@@ -65,9 +66,10 @@ export default function MainScreen() {
     () => getRecentExpenses(allExpenses, RECENT_EXPENSE_LIMIT),
     [allExpenses],
   );
+  const today = todayAsDateString();
   const periodComparison = useMemo(
-    () => compareRecentPeriods(periods, allExpenses, todayAsDateString()),
-    [periods, allExpenses],
+    () => compareRecentPeriods(periods, allExpenses, today),
+    [periods, allExpenses, today],
   );
 
   async function handleSaveExpense(id: string, input: ExpenseInput): Promise<ExpenseActionResult> {
@@ -118,16 +120,18 @@ export default function MainScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>지난 기간 대비 지출</Text>
+      <Text style={styles.heading}>최근 기간 대비 지출</Text>
       {isLoading ? null : loadError ? (
         <Text style={styles.error}>기간을 불러오지 못했습니다.</Text>
       ) : periodComparison ? (
         <View style={styles.comparisonBox}>
           <Text style={styles.comparisonPeriods}>
             이전: {periodComparison.previous.startDate} ~ {periodComparison.previous.endDate}
+            {isPastPeriod(periodComparison.previous, today) ? '' : ' (진행 중)'}
           </Text>
           <Text style={styles.comparisonPeriods}>
             최근: {periodComparison.latest.startDate} ~ {periodComparison.latest.endDate}
+            {isPastPeriod(periodComparison.latest, today) ? '' : ' (진행 중)'}
           </Text>
           <Text style={styles.comparisonAmount}>
             {periodComparison.difference === 0

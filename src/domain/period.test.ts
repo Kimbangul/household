@@ -1,4 +1,4 @@
-import { createPeriod, isPastPeriod, suggestNextPeriodStartDate, validatePeriodInput } from './period';
+import { createPeriod, isFuturePeriod, isPastPeriod, suggestNextPeriodStartDate, validatePeriodInput } from './period';
 import type { Period } from './types';
 
 const validInput = { startDate: '2026-08-01', endDate: '2026-08-31' };
@@ -82,5 +82,22 @@ describe('isPastPeriod', () => {
   test('is not past when the end date is in the future', () => {
     const period: Period = { id: 'p1', startDate: '2026-08-01', endDate: '2026-08-25', income: 0 };
     expect(isPastPeriod(period, '2026-08-24')).toBe(false);
+  });
+});
+
+describe('isFuturePeriod', () => {
+  test('is future when the start date is after today', () => {
+    const period: Period = { id: 'p1', startDate: '2026-08-25', endDate: '2026-09-10', income: 0 };
+    expect(isFuturePeriod(period, '2026-08-24')).toBe(true);
+  });
+
+  test('is not future when the start date is today (already started)', () => {
+    const period: Period = { id: 'p1', startDate: '2026-08-24', endDate: '2026-09-10', income: 0 };
+    expect(isFuturePeriod(period, '2026-08-24')).toBe(false);
+  });
+
+  test('is not future when the start date is in the past', () => {
+    const period: Period = { id: 'p1', startDate: '2026-08-01', endDate: '2026-09-10', income: 0 };
+    expect(isFuturePeriod(period, '2026-08-24')).toBe(false);
   });
 });
