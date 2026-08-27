@@ -11,13 +11,13 @@ import {
 import type { IncomeEntry } from '../domain/types';
 import { FieldError, FieldInput } from '../theme/styledPrimitives';
 import { parseDigitAmount } from '../utils/parseDigitAmount';
+import { CategoryIconChip } from './CategoryIconChip';
 import {
   ActionRow,
   CompactFieldLabel as FieldLabel,
   DeleteButton,
   DeleteButtonText,
   EditForm,
-  MetaText,
   RowMain,
   RowStatusSuccessText as StatusSuccessText,
   SaveButton,
@@ -107,11 +107,11 @@ export function IncomeEntryEditRow({
   return (
     <View>
       <SummaryRow onPress={onToggle}>
+        <CategoryIconChip color={theme.primary} textColor={theme.onPrimary} initial="수" size="compact" />
         <RowMain>
           <ItemText>{entry.item}</ItemText>
-          <MetaText>{entry.date}</MetaText>
         </RowMain>
-        <AmountText>{formatCurrency(entry.amount)}</AmountText>
+        <AmountText>+{formatCurrency(entry.amount)}</AmountText>
       </SummaryRow>
       {isExpanded ? (
         <EditForm>
@@ -203,6 +203,6 @@ const ItemText = styled.Text`
 
 const AmountText = styled.Text`
   font-size: 14px;
-  color: ${(props) => props.theme.text};
+  color: ${(props) => props.theme.primary};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;

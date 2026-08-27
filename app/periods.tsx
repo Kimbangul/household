@@ -9,6 +9,7 @@ import { IncomeEntryEditRow, type IncomeEntryActionResult } from '../src/compone
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
 import { aggregateExpensesByCategory, type CategoryStat } from '../src/domain/categoryStats';
 import { formatCurrency } from '../src/domain/currency';
+import { groupByDate } from '../src/domain/dateGroups';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
 import { createIncomeEntry, type IncomeEntryInput } from '../src/domain/incomeEntry';
 import { calculateNetSavings } from '../src/domain/netSavings';
@@ -19,6 +20,7 @@ import type { Category, Expense, IncomeEntry, Period } from '../src/domain/types
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import {
+  DateGroupHeading,
   EmptyText,
   FieldError,
   FieldInput,
@@ -389,6 +391,7 @@ function PeriodRow({
   onDeleteIncomeEntry: (id: string) => Promise<IncomeEntryActionResult>;
 }) {
   const netSavings = detail ? calculateNetSavings(detail.incomeTotal, detail.expenseTotal) : 0;
+  const today = todayAsDateString();
 
   return (
     <View>
@@ -412,16 +415,19 @@ function PeriodRow({
           {detail.incomeEntries.length === 0 ? (
             <EmptyText>이 기간에 속하는 수입내역이 없습니다.</EmptyText>
           ) : (
-            detail.incomeEntries.map((entry) => (
-              <IncomeEntryEditRow
-                key={entry.id}
-                entry={entry}
-                isExpanded={entry.id === selectedIncomeEntryId}
-                onToggle={() => onToggleIncomeEntry(entry.id)}
-                onSave={onSaveIncomeEntry}
-                onDelete={onDeleteIncomeEntry}
-              />
-            ))
+            groupByDate(detail.incomeEntries, today).flatMap((group) => [
+              <DateGroupHeading key={`income-heading-${group.date}`}>{group.label}</DateGroupHeading>,
+              ...group.items.map((entry) => (
+                <IncomeEntryEditRow
+                  key={entry.id}
+                  entry={entry}
+                  isExpanded={entry.id === selectedIncomeEntryId}
+                  onToggle={() => onToggleIncomeEntry(entry.id)}
+                  onSave={onSaveIncomeEntry}
+                  onDelete={onDeleteIncomeEntry}
+                />
+              )),
+            ])
           )}
 
           <SubsectionHeading>지출내역</SubsectionHeading>
@@ -430,19 +436,22 @@ function PeriodRow({
           ) : (
             <>
               <CategoryPieChart stats={detail.categoryStats} />
-              {detail.expenses.map((expense) => (
-                <ExpenseEditRow
-                  key={expense.id}
-                  expense={expense}
-                  categories={categories}
-                  categoryNames={detail.categoryNames}
-                  isExpanded={expense.id === selectedExpenseId}
-                  onToggle={() => onToggleExpense(expense.id)}
-                  onSave={onSaveExpense}
-                  onDelete={onDeleteExpense}
-                  variant="compact"
-                />
-              ))}
+              {groupByDate(detail.expenses, today).flatMap((group) => [
+                <DateGroupHeading key={`expense-heading-${group.date}`}>{group.label}</DateGroupHeading>,
+                ...group.items.map((expense) => (
+                  <ExpenseEditRow
+                    key={expense.id}
+                    expense={expense}
+                    categories={categories}
+                    categoryNames={detail.categoryNames}
+                    isExpanded={expense.id === selectedExpenseId}
+                    onToggle={() => onToggleExpense(expense.id)}
+                    onSave={onSaveExpense}
+                    onDelete={onDeleteExpense}
+                    variant="compact"
+                  />
+                )),
+              ])}
             </>
           )}
         </DetailBox>

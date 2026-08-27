@@ -23,6 +23,14 @@ export const SectionHeading = styled(Heading)`
   margin-bottom: 8px;
 `;
 
+export const DateGroupHeading = styled.Text`
+  font-size: 12px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  color: ${(props) => props.theme.textMuted};
+  font-family: ${(props) => props.theme.fontSemiBold};
+`;
+
 export const FieldLabel = styled.Text`
   font-size: 14px;
   margin-top: 12px;

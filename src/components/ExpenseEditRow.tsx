@@ -6,9 +6,11 @@ import { resolveCategoryLabel } from '../domain/categoryLookup';
 import { formatCurrency } from '../domain/currency';
 import { validateExpenseInput, type ExpenseInput, type ExpenseInputField } from '../domain/expense';
 import type { Category, Expense } from '../domain/types';
+import { getCategoryChipColor, getCategoryInitial } from '../theme/categoryChip';
 import { FieldError, FieldInput, MemoInput } from '../theme/styledPrimitives';
 import { parseDigitAmount } from '../utils/parseDigitAmount';
 import { CategoryChipPicker } from './CategoryChipPicker';
+import { CategoryIconChip } from './CategoryIconChip';
 import {
   ActionRow,
   CompactFieldLabel as FieldLabel,
@@ -113,17 +115,21 @@ export function ExpenseEditRow({
   }
 
   const isCompact = variant === 'compact';
+  const categoryLabel = resolveCategoryLabel(expense.categoryId, categoryNames);
 
   return (
     <View>
       <SummaryRow $compact={isCompact} onPress={onToggle}>
+        <CategoryIconChip
+          color={getCategoryChipColor(expense.categoryId)}
+          initial={getCategoryInitial(categoryLabel)}
+          size={isCompact ? 'compact' : 'standalone'}
+        />
         <RowMain>
           <ItemText $compact={isCompact}>{expense.item}</ItemText>
-          <MetaText>
-            {expense.date} · {resolveCategoryLabel(expense.categoryId, categoryNames)}
-          </MetaText>
+          <MetaText>{categoryLabel}</MetaText>
         </RowMain>
-        <AmountText $compact={isCompact}>{formatCurrency(expense.amount)}</AmountText>
+        <AmountText $compact={isCompact}>{formatCurrency(-expense.amount)}</AmountText>
       </SummaryRow>
       {isExpanded ? (
         <EditForm>
@@ -226,6 +232,6 @@ const ItemText = styled.Text<{ $compact: boolean }>`
 
 const AmountText = styled.Text<{ $compact: boolean }>`
   font-size: ${(props) => (props.$compact ? '14px' : '16px')};
-  color: ${(props) => props.theme.text};
+  color: ${(props) => props.theme.danger};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;

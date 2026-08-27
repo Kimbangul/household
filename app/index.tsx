@@ -5,13 +5,14 @@ import styled from 'styled-components/native';
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
 import { formatCurrency } from '../src/domain/currency';
+import { groupByDate } from '../src/domain/dateGroups';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
 import { isPastPeriod } from '../src/domain/period';
 import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
-import { EmptyText, Heading, Screen } from '../src/theme/styledPrimitives';
+import { DateGroupHeading, EmptyText, Heading, Screen } from '../src/theme/styledPrimitives';
 import { todayAsDateString } from '../src/utils/today';
 
 const RECENT_EXPENSE_LIMIT = 20;
@@ -148,20 +149,23 @@ export default function MainScreen() {
       ) : recentExpenses.length === 0 ? (
         <EmptyText>아직 등록된 지출내역이 없습니다.</EmptyText>
       ) : (
-        recentExpenses.map((expense) => (
-          <ExpenseEditRow
-            key={expense.id}
-            expense={expense}
-            categories={categories}
-            categoryNames={categoryNames}
-            isExpanded={expense.id === selectedExpenseId}
-            onToggle={() =>
-              setSelectedExpenseId((current) => (current === expense.id ? null : expense.id))
-            }
-            onSave={handleSaveExpense}
-            onDelete={handleDeleteExpense}
-          />
-        ))
+        groupByDate(recentExpenses, today).flatMap((group) => [
+          <DateGroupHeading key={`heading-${group.date}`}>{group.label}</DateGroupHeading>,
+          ...group.items.map((expense) => (
+            <ExpenseEditRow
+              key={expense.id}
+              expense={expense}
+              categories={categories}
+              categoryNames={categoryNames}
+              isExpanded={expense.id === selectedExpenseId}
+              onToggle={() =>
+                setSelectedExpenseId((current) => (current === expense.id ? null : expense.id))
+              }
+              onSave={handleSaveExpense}
+              onDelete={handleDeleteExpense}
+            />
+          )),
+        ])
       )}
     </Screen>
   );
