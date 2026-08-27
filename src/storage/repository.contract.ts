@@ -6,12 +6,13 @@ import type { LedgerRepository } from './types';
  * Run against each concrete implementation (in-memory, AsyncStorage-backed, ...).
  */
 export function testsRepositoryContract(createRepository: () => LedgerRepository) {
-  test('starts out with no categories, expenses, or periods', async () => {
+  test('starts out with no categories, expenses, periods, or income entries', async () => {
     const repository = createRepository();
 
     expect(await repository.getCategories()).toEqual([]);
     expect(await repository.getExpenses()).toEqual([]);
     expect(await repository.getPeriods()).toEqual([]);
+    expect(await repository.getIncomeEntries()).toEqual([]);
   });
 
   test('starts out with default settings', async () => {
@@ -50,10 +51,19 @@ export function testsRepositoryContract(createRepository: () => LedgerRepository
 
   test('periods written can be read back unchanged', async () => {
     const repository = createRepository();
-    const periods = [{ id: 'p1', startDate: '2026-06-25', endDate: '2026-07-24', income: 3000000 }];
+    const periods = [{ id: 'p1', startDate: '2026-06-25', endDate: '2026-07-24' }];
 
     await repository.savePeriods(periods);
 
     expect(await repository.getPeriods()).toEqual(periods);
+  });
+
+  test('income entries written can be read back unchanged', async () => {
+    const repository = createRepository();
+    const incomeEntries = [{ id: 'i1', date: '2026-07-01', item: '7월 급여', amount: 3000000 }];
+
+    await repository.saveIncomeEntries(incomeEntries);
+
+    expect(await repository.getIncomeEntries()).toEqual(incomeEntries);
   });
 }

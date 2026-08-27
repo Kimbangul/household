@@ -4,7 +4,7 @@ import type { Expense, Period } from './types';
 const TODAY = '2026-08-27';
 
 function period(overrides: Partial<Period>): Period {
-  return { id: 'p1', startDate: '2026-07-01', endDate: '2026-07-31', income: 0, ...overrides };
+  return { id: 'p1', startDate: '2026-07-01', endDate: '2026-07-31', ...overrides };
 }
 
 function expense(overrides: Partial<Expense>): Expense {

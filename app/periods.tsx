@@ -1,19 +1,21 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
 import { CategoryPieChart } from '../src/components/CategoryPieChart';
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
+import { IncomeEntryEditRow, type IncomeEntryActionResult } from '../src/components/IncomeEntryEditRow';
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
 import { aggregateExpensesByCategory, type CategoryStat } from '../src/domain/categoryStats';
 import { formatCurrency } from '../src/domain/currency';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
+import { createIncomeEntry, type IncomeEntryInput } from '../src/domain/incomeEntry';
 import { calculateNetSavings } from '../src/domain/netSavings';
 import { createPeriod, isPastPeriod, suggestNextPeriodStartDate, validatePeriodInput } from '../src/domain/period';
 import type { PeriodInputField } from '../src/domain/period';
-import { getExpensesInPeriod, sumExpenseAmounts } from '../src/domain/periodExpenses';
-import type { Category, Expense, Period } from '../src/domain/types';
+import { getRecordsInPeriod, sumAmounts } from '../src/domain/periodRecords';
+import type { Category, Expense, IncomeEntry, Period } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import {
@@ -30,18 +32,17 @@ import {
   SubmitButtonText,
 } from '../src/theme/styledPrimitives';
 import { generateId } from '../src/utils/generateId';
-import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
 
 const CONTENT_CONTAINER_STYLE = { padding: 16, gap: 4 };
 
-type UpdateIncomeResult = 'success' | 'busy' | 'error';
-
 interface PeriodDetail {
   expenses: Expense[];
-  total: number;
+  expenseTotal: number;
   categoryNames: Record<string, string>;
   categoryStats: CategoryStat[];
+  incomeEntries: IncomeEntry[];
+  incomeTotal: number;
 }
 
 export default function PeriodsScreen() {
@@ -50,6 +51,7 @@ export default function PeriodsScreen() {
 
   const [periods, setPeriods] = useState<Period[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -57,6 +59,7 @@ export default function PeriodsScreen() {
   const [deleteError, setDeleteError] = useState(false);
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
+  const [selectedIncomeEntryId, setSelectedIncomeEntryId] = useState<string | null>(null);
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -73,13 +76,19 @@ export default function PeriodsScreen() {
       setIsLoading(true);
       setSubmitStatus(null);
 
-      Promise.all([repository.getPeriods(), repository.getExpenses(), repository.getCategories()])
-        .then(([loadedPeriods, loadedExpenses, loadedCategories]) => {
+      Promise.all([
+        repository.getPeriods(),
+        repository.getExpenses(),
+        repository.getIncomeEntries(),
+        repository.getCategories(),
+      ])
+        .then(([loadedPeriods, loadedExpenses, loadedIncomeEntries, loadedCategories]) => {
           if (cancelled) {
             return;
           }
           setPeriods(loadedPeriods);
           setExpenses(loadedExpenses);
+          setIncomeEntries(loadedIncomeEntries);
           setCategories(loadedCategories);
           setCategoryNames(buildCategoryNameMap(loadedCategories));
           if (!startDateTouchedRef.current) {
@@ -162,31 +171,6 @@ export default function PeriodsScreen() {
     }
   }
 
-  async function handleUpdateIncome(id: string, income: number): Promise<UpdateIncomeResult> {
-    // Shares the add/delete mutex: a concurrent mutation would otherwise read
-    // the same stale `periods` snapshot and one write would silently revert
-    // the other. 'busy' is reported back so the caller doesn't show a false
-    // save-failed message for what was really just a declined attempt. The
-    // isLoading/loadError guard mirrors handleAddPeriod's — periods may still
-    // be stale/empty while a load is in flight or failed.
-    if (submittingRef.current || isLoading || loadError) {
-      return 'busy';
-    }
-
-    submittingRef.current = true;
-    const next = periods.map((period) => (period.id === id ? { ...period, income } : period));
-    try {
-      await repository.savePeriods(next);
-      setPeriods(next);
-      return 'success';
-    } catch (error) {
-      console.error('Failed to save income', error);
-      return 'error';
-    } finally {
-      submittingRef.current = false;
-    }
-  }
-
   async function handleSaveExpense(id: string, input: ExpenseInput): Promise<ExpenseActionResult> {
     // Shares the same submittingRef mutex as the period handlers above: this
     // screen's period and expense mutations both read/write from state that
@@ -229,20 +213,65 @@ export default function PeriodsScreen() {
     }
   }
 
+  async function handleSaveIncomeEntry(id: string, input: IncomeEntryInput): Promise<IncomeEntryActionResult> {
+    // Shares the same submittingRef mutex as every other mutation on this screen.
+    if (submittingRef.current || isLoading || loadError) {
+      return 'busy';
+    }
+    submittingRef.current = true;
+    try {
+      const updated = createIncomeEntry(input, id);
+      const next = incomeEntries.map((entry) => (entry.id === id ? updated : entry));
+      await repository.saveIncomeEntries(next);
+      setIncomeEntries(next);
+      return 'success';
+    } catch (error) {
+      console.error('Failed to update income entry', error);
+      return 'error';
+    } finally {
+      submittingRef.current = false;
+    }
+  }
+
+  async function handleDeleteIncomeEntry(id: string): Promise<IncomeEntryActionResult> {
+    if (submittingRef.current || isLoading || loadError) {
+      return 'busy';
+    }
+    submittingRef.current = true;
+    try {
+      const next = incomeEntries.filter((entry) => entry.id !== id);
+      await repository.saveIncomeEntries(next);
+      setIncomeEntries(next);
+      setSelectedIncomeEntryId((current) => (current === id ? null : current));
+      return 'success';
+    } catch (error) {
+      console.error('Failed to delete income entry', error);
+      return 'error';
+    } finally {
+      submittingRef.current = false;
+    }
+  }
+
   const today = todayAsDateString();
   const currentPeriods = periods.filter((period) => !isPastPeriod(period, today));
   const pastPeriods = periods.filter((period) => isPastPeriod(period, today));
 
   const selectedPeriod = periods.find((period) => period.id === selectedPeriodId) ?? null;
   const selectedPeriodExpenses = useMemo(
-    () => (selectedPeriod ? getExpensesInPeriod(expenses, selectedPeriod) : []),
+    () => (selectedPeriod ? getRecordsInPeriod(expenses, selectedPeriod) : []),
     [selectedPeriod, expenses],
+  );
+  const selectedPeriodIncomeEntries = useMemo(
+    () => (selectedPeriod ? getRecordsInPeriod(incomeEntries, selectedPeriod) : []),
+    [selectedPeriod, incomeEntries],
   );
   const selectedPeriodDetail: PeriodDetail | null = selectedPeriod && {
     expenses: selectedPeriodExpenses,
-    total: sumExpenseAmounts(selectedPeriodExpenses),
+    expenseTotal: sumAmounts(selectedPeriodExpenses),
     categoryNames,
     categoryStats: aggregateExpensesByCategory(selectedPeriodExpenses, categoryNames),
+    incomeEntries: selectedPeriodIncomeEntries,
+    incomeTotal: sumAmounts(selectedPeriodIncomeEntries),
   };
 
   function renderPeriodRow(period: Period) {
@@ -253,15 +282,19 @@ export default function PeriodsScreen() {
         detail={period.id === selectedPeriodId ? selectedPeriodDetail : null}
         categories={categories}
         selectedExpenseId={selectedExpenseId}
+        selectedIncomeEntryId={selectedIncomeEntryId}
         onToggle={() => {
           setSelectedPeriodId((current) => (current === period.id ? null : period.id));
           setSelectedExpenseId(null);
+          setSelectedIncomeEntryId(null);
         }}
         onDelete={() => handleDeletePeriod(period.id)}
-        onSaveIncome={handleUpdateIncome}
         onToggleExpense={(id) => setSelectedExpenseId((current) => (current === id ? null : id))}
         onSaveExpense={handleSaveExpense}
         onDeleteExpense={handleDeleteExpense}
+        onToggleIncomeEntry={(id) => setSelectedIncomeEntryId((current) => (current === id ? null : id))}
+        onSaveIncomeEntry={handleSaveIncomeEntry}
+        onDeleteIncomeEntry={handleDeleteIncomeEntry}
       />
     );
   }
@@ -326,70 +359,36 @@ export default function PeriodsScreen() {
   );
 }
 
-type IncomeSaveState =
-  | { status: 'idle' }
-  | { status: 'saving' }
-  | { status: 'invalid'; message: string }
-  | { status: 'success' }
-  | { status: 'error'; message: string };
-
 function PeriodRow({
   period,
   detail,
   categories,
   selectedExpenseId,
+  selectedIncomeEntryId,
   onToggle,
   onDelete,
-  onSaveIncome,
   onToggleExpense,
   onSaveExpense,
   onDeleteExpense,
+  onToggleIncomeEntry,
+  onSaveIncomeEntry,
+  onDeleteIncomeEntry,
 }: {
   period: Period;
   detail: PeriodDetail | null;
   categories: Category[];
   selectedExpenseId: string | null;
+  selectedIncomeEntryId: string | null;
   onToggle: () => void;
   onDelete: () => void;
-  onSaveIncome: (id: string, income: number) => Promise<UpdateIncomeResult>;
   onToggleExpense: (id: string) => void;
   onSaveExpense: (id: string, input: ExpenseInput) => Promise<ExpenseActionResult>;
   onDeleteExpense: (id: string) => Promise<ExpenseActionResult>;
+  onToggleIncomeEntry: (id: string) => void;
+  onSaveIncomeEntry: (id: string, input: IncomeEntryInput) => Promise<IncomeEntryActionResult>;
+  onDeleteIncomeEntry: (id: string) => Promise<IncomeEntryActionResult>;
 }) {
-  const theme = useTheme();
-  const [incomeText, setIncomeText] = useState(String(period.income));
-  const [saveState, setSaveState] = useState<IncomeSaveState>({ status: 'idle' });
-  // Tracks whether the user has edited the field since it was last synced
-  // from period.income, so a save that resolves after a newer keystroke
-  // doesn't clobber the not-yet-saved text.
-  const incomeTouchedRef = useRef(false);
-
-  useEffect(() => {
-    if (!incomeTouchedRef.current) {
-      setIncomeText(String(period.income));
-    }
-  }, [period.income]);
-
-  async function handleSaveIncome() {
-    const income = parseDigitAmount(incomeText);
-    if (Number.isNaN(income)) {
-      setSaveState({ status: 'invalid', message: '수입은 0 이상의 정수여야 합니다.' });
-      return;
-    }
-
-    setSaveState({ status: 'saving' });
-    const result = await onSaveIncome(period.id, income);
-    if (result === 'success') {
-      incomeTouchedRef.current = false;
-      setSaveState({ status: 'success' });
-    } else if (result === 'busy') {
-      setSaveState({ status: 'invalid', message: '다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요.' });
-    } else {
-      setSaveState({ status: 'error', message: '저장하지 못했습니다. 다시 시도해주세요.' });
-    }
-  }
-
-  const netSavings = detail ? calculateNetSavings(period.income, detail.total) : 0;
+  const netSavings = detail ? calculateNetSavings(detail.incomeTotal, detail.expenseTotal) : 0;
 
   return (
     <View>
@@ -405,31 +404,27 @@ function PeriodRow({
       </PeriodHeaderRow>
       {detail ? (
         <DetailBox>
-          <FieldLabel>수입</FieldLabel>
-          <IncomeRow>
-            <IncomeInput
-              value={incomeText}
-              onChangeText={(value) => {
-                setIncomeText(value);
-                incomeTouchedRef.current = true;
-                setSaveState({ status: 'idle' });
-              }}
-              placeholder="예: 3000000"
-              placeholderTextColor={theme.textMuted}
-              keyboardType="numeric"
-            />
-            <IncomeSaveButton onPress={handleSaveIncome} disabled={saveState.status === 'saving'}>
-              <IncomeSaveButtonText>
-                {saveState.status === 'saving' ? '저장 중...' : '저장'}
-              </IncomeSaveButtonText>
-            </IncomeSaveButton>
-          </IncomeRow>
-          {saveState.status === 'invalid' || saveState.status === 'error' ? (
-            <FieldError>{saveState.message}</FieldError>
-          ) : null}
-          {saveState.status === 'success' ? <StatusSuccessText>수입이 저장되었습니다.</StatusSuccessText> : null}
+          <DetailTotalText>수입 합계 {formatCurrency(detail.incomeTotal)}</DetailTotalText>
+          <DetailTotalText>지출 합계 {formatCurrency(detail.expenseTotal)}</DetailTotalText>
           <DetailTotalText>순저축 {formatCurrency(netSavings)}</DetailTotalText>
-          <DetailTotalText>지출 합계 {formatCurrency(detail.total)}</DetailTotalText>
+
+          <SubsectionHeading>수입내역</SubsectionHeading>
+          {detail.incomeEntries.length === 0 ? (
+            <EmptyText>이 기간에 속하는 수입내역이 없습니다.</EmptyText>
+          ) : (
+            detail.incomeEntries.map((entry) => (
+              <IncomeEntryEditRow
+                key={entry.id}
+                entry={entry}
+                isExpanded={entry.id === selectedIncomeEntryId}
+                onToggle={() => onToggleIncomeEntry(entry.id)}
+                onSave={onSaveIncomeEntry}
+                onDelete={onDeleteIncomeEntry}
+              />
+            ))
+          )}
+
+          <SubsectionHeading>지출내역</SubsectionHeading>
           {detail.expenses.length === 0 ? (
             <EmptyText>이 기간에 속하는 지출내역이 없습니다.</EmptyText>
           ) : (
@@ -494,25 +489,10 @@ const DetailTotalText = styled.Text`
   color: ${(props) => props.theme.text};
 `;
 
-const IncomeRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-`;
-
-const IncomeInput = styled(FieldInput)`
-  flex: 1;
-  margin-top: 0px;
-`;
-
-const IncomeSaveButton = styled(Pressable)`
-  border-radius: 8px;
-  padding-vertical: 10px;
-  padding-horizontal: 14px;
-  background-color: ${(props) => props.theme.primary};
-`;
-
-const IncomeSaveButtonText = styled.Text`
+const SubsectionHeading = styled.Text`
+  font-size: 14px;
   font-weight: 600;
-  color: ${(props) => props.theme.onPrimary};
+  margin-top: 12px;
+  margin-bottom: 4px;
+  color: ${(props) => props.theme.text};
 `;

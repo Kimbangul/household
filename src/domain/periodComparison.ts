@@ -1,5 +1,5 @@
 import { isFuturePeriod } from './period';
-import { getExpensesInPeriod, sumExpenseAmounts } from './periodExpenses';
+import { getRecordsInPeriod, sumAmounts } from './periodRecords';
 import type { Expense, Period } from './types';
 
 export interface PeriodComparison {
@@ -40,8 +40,8 @@ export function compareRecentPeriods(periods: Period[], expenses: Expense[], tod
 
   const [latest, previous] = [...eligiblePeriods].sort(byLatestEndDate);
 
-  const latestTotal = sumExpenseAmounts(getExpensesInPeriod(expenses, latest));
-  const previousTotal = sumExpenseAmounts(getExpensesInPeriod(expenses, previous));
+  const latestTotal = sumAmounts(getRecordsInPeriod(expenses, latest));
+  const previousTotal = sumAmounts(getRecordsInPeriod(expenses, previous));
 
   return { latest, previous, latestTotal, previousTotal, difference: latestTotal - previousTotal };
 }

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 import { createAsyncStorageRepository } from './asyncStorageRepository';
 import { loadCategoriesWithSeed } from './loadCategoriesWithSeed';
+import { migrateIncomeEntriesFromPeriods } from './migrateLegacyPeriodIncome';
 import type { LedgerRepository } from './types';
 
 const RepositoryContext = createContext<LedgerRepository | null>(null);
@@ -13,9 +14,9 @@ export function RepositoryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    loadCategoriesWithSeed(repository)
+    Promise.all([loadCategoriesWithSeed(repository), migrateIncomeEntriesFromPeriods(repository)])
       .catch((error) => {
-        console.error('Failed to seed default categories', error);
+        console.error('Failed to run startup migrations', error);
       })
       .finally(() => {
         if (!cancelled) {

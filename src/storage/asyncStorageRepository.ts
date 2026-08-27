@@ -1,13 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
-import type { Category, Expense, Period } from '../domain/types';
+import type { Category, Expense, IncomeEntry, Period } from '../domain/types';
 import type { LedgerRepository } from './types';
 
 const STORAGE_KEYS = {
   categories: 'household-ledger/categories',
   expenses: 'household-ledger/expenses',
   periods: 'household-ledger/periods',
+  incomeEntries: 'household-ledger/incomeEntries',
   settings: 'household-ledger/settings',
 };
 
@@ -35,6 +36,8 @@ export function createAsyncStorageRepository(): LedgerRepository {
     saveExpenses: (expenses) => writeJson(STORAGE_KEYS.expenses, expenses),
     getPeriods: () => readJson<Period[]>(STORAGE_KEYS.periods, []),
     savePeriods: (periods) => writeJson(STORAGE_KEYS.periods, periods),
+    getIncomeEntries: () => readJson<IncomeEntry[]>(STORAGE_KEYS.incomeEntries, []),
+    saveIncomeEntries: (incomeEntries) => writeJson(STORAGE_KEYS.incomeEntries, incomeEntries),
     getSettings: () => readJson<Settings>(STORAGE_KEYS.settings, DEFAULT_SETTINGS),
     saveSettings: (settings) => writeJson(STORAGE_KEYS.settings, settings),
   };

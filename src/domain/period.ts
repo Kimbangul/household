@@ -39,7 +39,6 @@ export function createPeriod(input: PeriodInput, id: string): Period {
     id,
     startDate: input.startDate,
     endDate: input.endDate,
-    income: 0,
   };
 }
 

@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
-import { resolveCategoryLabel } from '../domain/categoryLookup';
 import { formatCurrency } from '../domain/currency';
-import { validateExpenseInput, type ExpenseInput, type ExpenseInputField } from '../domain/expense';
-import type { Category, Expense } from '../domain/types';
-import { FieldError, FieldInput, MemoInput } from '../theme/styledPrimitives';
+import {
+  validateIncomeEntryInput,
+  type IncomeEntryInput,
+  type IncomeEntryInputField,
+} from '../domain/incomeEntry';
+import type { IncomeEntry } from '../domain/types';
+import { FieldError, FieldInput } from '../theme/styledPrimitives';
 import { parseDigitAmount } from '../utils/parseDigitAmount';
-import { CategoryChipPicker } from './CategoryChipPicker';
 import {
   ActionRow,
   CompactFieldLabel as FieldLabel,
@@ -22,77 +24,67 @@ import {
   SaveButtonText,
 } from './editRowPrimitives';
 
-export type ExpenseActionResult = 'success' | 'busy' | 'error';
+export type IncomeEntryActionResult = 'success' | 'busy' | 'error';
 
-type ExpenseActionState =
+type IncomeEntryActionState =
   | { status: 'idle' }
   | { status: 'saving' }
   | { status: 'deleting' }
-  | { status: 'invalid'; errors: Partial<Record<ExpenseInputField, string>> }
+  | { status: 'invalid'; errors: Partial<Record<IncomeEntryInputField, string>> }
   | { status: 'success' }
   | { status: 'error'; message: string };
 
-export function ExpenseEditRow({
-  expense,
-  categories,
-  categoryNames,
+export function IncomeEntryEditRow({
+  entry,
   isExpanded,
   onToggle,
   onSave,
   onDelete,
-  variant = 'standalone',
 }: {
-  expense: Expense;
-  categories: Category[];
-  categoryNames: Record<string, string>;
+  entry: IncomeEntry;
   isExpanded: boolean;
   onToggle: () => void;
-  onSave: (id: string, input: ExpenseInput) => Promise<ExpenseActionResult>;
-  onDelete: (id: string) => Promise<ExpenseActionResult>;
-  variant?: 'standalone' | 'compact';
+  onSave: (id: string, input: IncomeEntryInput) => Promise<IncomeEntryActionResult>;
+  onDelete: (id: string) => Promise<IncomeEntryActionResult>;
 }) {
   const theme = useTheme();
-  const [date, setDate] = useState(expense.date);
-  const [item, setItem] = useState(expense.item);
-  const [amountText, setAmountText] = useState(String(expense.amount));
-  const [categoryId, setCategoryId] = useState<string | null>(expense.categoryId);
-  const [memo, setMemo] = useState(expense.memo ?? '');
-  const [actionState, setActionState] = useState<ExpenseActionState>({ status: 'idle' });
-  // Fields should only reset from `expense` when the row is opened, not on every
-  // re-render while it's already open, or a concurrent save elsewhere would
-  // clobber whatever the user is mid-typing here.
+  const [date, setDate] = useState(entry.date);
+  const [item, setItem] = useState(entry.item);
+  const [amountText, setAmountText] = useState(String(entry.amount));
+  const [memo, setMemo] = useState(entry.memo ?? '');
+  const [actionState, setActionState] = useState<IncomeEntryActionState>({ status: 'idle' });
+  // Same guard as ExpenseEditRow: only reset fields from `entry` when the row
+  // is opened, not on every re-render while it's already open.
   const wasExpandedRef = useRef(false);
 
   useEffect(() => {
     if (isExpanded && !wasExpandedRef.current) {
-      setDate(expense.date);
-      setItem(expense.item);
-      setAmountText(String(expense.amount));
-      setCategoryId(expense.categoryId);
-      setMemo(expense.memo ?? '');
+      setDate(entry.date);
+      setItem(entry.item);
+      setAmountText(String(entry.amount));
+      setMemo(entry.memo ?? '');
       setActionState({ status: 'idle' });
     }
     wasExpandedRef.current = isExpanded;
-  }, [isExpanded, expense]);
+  }, [isExpanded, entry]);
 
   const errors = actionState.status === 'invalid' ? actionState.errors : {};
   const isBusy = actionState.status === 'saving' || actionState.status === 'deleting';
 
   async function handleSave() {
-    const input: ExpenseInput = {
+    const input: IncomeEntryInput = {
       date,
       item,
       amount: parseDigitAmount(amountText),
-      categoryId,
       memo: memo.trim() ? memo.trim() : undefined,
     };
-    const validation = validateExpenseInput(input);
+    const validation = validateIncomeEntryInput(input);
     if (!validation.valid) {
       setActionState({ status: 'invalid', errors: validation.errors });
       return;
     }
     setActionState({ status: 'saving' });
-    const result = await onSave(expense.id, input);
+    const result = await onSave(entry.id, input);
     if (result === 'success') {
       setActionState({ status: 'success' });
     } else if (result === 'busy') {
@@ -104,7 +96,7 @@ export function ExpenseEditRow({
 
   async function handleDelete() {
     setActionState({ status: 'deleting' });
-    const result = await onDelete(expense.id);
+    const result = await onDelete(entry.id);
     if (result === 'busy') {
       setActionState({ status: 'error', message: '다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요.' });
     } else if (result === 'error') {
@@ -112,18 +104,14 @@ export function ExpenseEditRow({
     }
   }
 
-  const isCompact = variant === 'compact';
-
   return (
     <View>
-      <SummaryRow $compact={isCompact} onPress={onToggle}>
+      <SummaryRow onPress={onToggle}>
         <RowMain>
-          <ItemText $compact={isCompact}>{expense.item}</ItemText>
-          <MetaText>
-            {expense.date} · {resolveCategoryLabel(expense.categoryId, categoryNames)}
-          </MetaText>
+          <ItemText>{entry.item}</ItemText>
+          <MetaText>{entry.date}</MetaText>
         </RowMain>
-        <AmountText $compact={isCompact}>{formatCurrency(expense.amount)}</AmountText>
+        <AmountText>{formatCurrency(entry.amount)}</AmountText>
       </SummaryRow>
       {isExpanded ? (
         <EditForm>
@@ -140,14 +128,14 @@ export function ExpenseEditRow({
           />
           {errors.date ? <FieldError>{errors.date}</FieldError> : null}
 
-          <FieldLabel>품목</FieldLabel>
+          <FieldLabel>내용</FieldLabel>
           <FieldInput
             value={item}
             onChangeText={(value) => {
               setItem(value);
               setActionState({ status: 'idle' });
             }}
-            placeholder="예: 점심"
+            placeholder="예: 8월 급여"
             placeholderTextColor={theme.textMuted}
           />
           {errors.item ? <FieldError>{errors.item}</FieldError> : null}
@@ -159,25 +147,14 @@ export function ExpenseEditRow({
               setAmountText(value);
               setActionState({ status: 'idle' });
             }}
-            placeholder="예: 12000"
+            placeholder="예: 3000000"
             placeholderTextColor={theme.textMuted}
             keyboardType="numeric"
           />
           {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
 
-          <FieldLabel>카테고리</FieldLabel>
-          <CategoryChipPicker
-            categories={categories}
-            selectedId={categoryId}
-            onSelect={(id) => {
-              setCategoryId(id);
-              setActionState({ status: 'idle' });
-            }}
-          />
-          {errors.categoryId ? <FieldError>{errors.categoryId}</FieldError> : null}
-
           <FieldLabel>비고 (선택)</FieldLabel>
-          <MemoInput
+          <FieldInput
             value={memo}
             onChangeText={(value) => {
               setMemo(value);
@@ -185,12 +162,11 @@ export function ExpenseEditRow({
             }}
             placeholder="메모"
             placeholderTextColor={theme.textMuted}
-            multiline
           />
 
           {actionState.status === 'error' ? <FieldError>{actionState.message}</FieldError> : null}
           {actionState.status === 'success' ? (
-            <StatusSuccessText>지출내역이 저장되었습니다.</StatusSuccessText>
+            <StatusSuccessText>수입내역이 저장되었습니다.</StatusSuccessText>
           ) : null}
 
           <ActionRow>
@@ -209,22 +185,23 @@ export function ExpenseEditRow({
   );
 }
 
-const SummaryRow = styled(Pressable)<{ $compact: boolean }>`
+// This row only ever appears nested inside a period's detail box (never
+// standalone on the main screen), so it uses ExpenseEditRow's compact sizing
+// directly rather than needing its own standalone/compact variant switch.
+const SummaryRow = styled(Pressable)`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-vertical: ${(props) => (props.$compact ? '6px' : '10px')};
-  border-bottom-width: ${(props) => (props.$compact ? '0px' : '1px')};
-  border-bottom-color: ${(props) => props.theme.border};
+  padding-vertical: 6px;
 `;
 
-const ItemText = styled.Text<{ $compact: boolean }>`
-  font-size: ${(props) => (props.$compact ? '14px' : '16px')};
+const ItemText = styled.Text`
+  font-size: 14px;
   color: ${(props) => props.theme.text};
 `;
 
-const AmountText = styled.Text<{ $compact: boolean }>`
-  font-size: ${(props) => (props.$compact ? '14px' : '16px')};
+const AmountText = styled.Text`
+  font-size: 14px;
   font-weight: 600;
   color: ${(props) => props.theme.text};
 `;

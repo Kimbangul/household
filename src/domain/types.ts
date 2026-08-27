@@ -17,5 +17,12 @@ export interface Period {
   id: string;
   startDate: string;
   endDate: string;
-  income: number;
+}
+
+export interface IncomeEntry {
+  id: string;
+  date: string;
+  item: string;
+  amount: number;
+  memo?: string;
 }
