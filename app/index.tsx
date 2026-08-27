@@ -1,13 +1,16 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
+import { formatCurrency } from '../src/domain/currency';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
+import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
-import type { Category, Expense } from '../src/domain/types';
+import type { Category, Expense, Period } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
+import { todayAsDateString } from '../src/utils/today';
 
 const RECENT_EXPENSE_LIMIT = 20;
 
@@ -15,6 +18,7 @@ export default function MainScreen() {
   const repository = useRepository();
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [periods, setPeriods] = useState<Period[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
@@ -25,13 +29,14 @@ export default function MainScreen() {
       let cancelled = false;
       setIsLoading(true);
 
-      Promise.all([repository.getExpenses(), repository.getCategories()])
-        .then(([expenses, loadedCategories]) => {
+      Promise.all([repository.getExpenses(), repository.getCategories(), repository.getPeriods()])
+        .then(([expenses, loadedCategories, loadedPeriods]) => {
           if (cancelled) {
             return;
           }
           setAllExpenses(expenses);
           setCategories(loadedCategories);
+          setPeriods(loadedPeriods);
           setLoadError(false);
         })
         .catch((error) => {
@@ -56,6 +61,10 @@ export default function MainScreen() {
   const recentExpenses = useMemo(
     () => getRecentExpenses(allExpenses, RECENT_EXPENSE_LIMIT),
     [allExpenses],
+  );
+  const periodComparison = useMemo(
+    () => compareRecentPeriods(periods, allExpenses, todayAsDateString()),
+    [periods, allExpenses],
   );
 
   async function handleSaveExpense(id: string, input: ExpenseInput): Promise<ExpenseActionResult> {
@@ -106,7 +115,28 @@ export default function MainScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>최근 지출</Text>
+      <Text style={styles.heading}>지난 기간 대비 지출</Text>
+      {isLoading ? null : loadError ? (
+        <Text style={styles.error}>기간을 불러오지 못했습니다.</Text>
+      ) : periodComparison ? (
+        <View style={styles.comparisonBox}>
+          <Text style={styles.comparisonPeriods}>
+            이전: {periodComparison.previous.startDate} ~ {periodComparison.previous.endDate}
+          </Text>
+          <Text style={styles.comparisonPeriods}>
+            최근: {periodComparison.latest.startDate} ~ {periodComparison.latest.endDate}
+          </Text>
+          <Text style={styles.comparisonAmount}>
+            {periodComparison.difference === 0
+              ? '지출 변동이 없습니다.'
+              : `${formatCurrency(Math.abs(periodComparison.difference))} ${periodComparison.difference > 0 ? '증가' : '감소'}`}
+          </Text>
+        </View>
+      ) : (
+        <Text style={styles.empty}>비교할 이전 기간이 없습니다.</Text>
+      )}
+
+      <Text style={[styles.heading, styles.sectionHeading]}>최근 지출</Text>
       {isLoading ? null : loadError ? (
         <Text style={styles.error}>지출내역을 불러오지 못했습니다.</Text>
       ) : recentExpenses.length === 0 ? (
@@ -134,6 +164,15 @@ export default function MainScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16 },
   heading: { fontSize: 20, fontWeight: '600', marginBottom: 12 },
+  sectionHeading: { marginTop: 24 },
   empty: { color: '#888' },
   error: { color: '#d33' },
+  comparisonBox: {
+    padding: 12,
+    backgroundColor: '#f7f7f7',
+    borderRadius: 8,
+    gap: 4,
+  },
+  comparisonPeriods: { fontSize: 12, color: '#888' },
+  comparisonAmount: { fontSize: 18, fontWeight: '600' },
 });
