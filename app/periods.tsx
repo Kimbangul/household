@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import styled, { useTheme } from 'styled-components/native';
 
 import { CategoryPieChart } from '../src/components/CategoryPieChart';
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
@@ -15,10 +16,11 @@ import { getExpensesInPeriod, sumExpenseAmounts } from '../src/domain/periodExpe
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
-import { useAppColors, type AppColors } from '../src/theme/useAppColors';
 import { generateId } from '../src/utils/generateId';
 import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
+
+const CONTENT_CONTAINER_STYLE = { padding: 16, gap: 4 };
 
 type UpdateIncomeResult = 'success' | 'busy' | 'error';
 
@@ -31,8 +33,7 @@ interface PeriodDetail {
 
 export default function PeriodsScreen() {
   const repository = useRepository();
-  const colors = useAppColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
 
   const [periods, setPeriods] = useState<Period[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -253,12 +254,11 @@ export default function PeriodsScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>새 기간 추가</Text>
+    <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
+      <Heading>새 기간 추가</Heading>
 
-      <Text style={styles.label}>시작일</Text>
-      <TextInput
-        style={styles.input}
+      <FieldLabel>시작일</FieldLabel>
+      <FieldInput
         value={startDate}
         onChangeText={(value) => {
           setStartDate(value);
@@ -266,55 +266,50 @@ export default function PeriodsScreen() {
           clearFieldError('startDate');
         }}
         placeholder="YYYY-MM-DD"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={theme.textMuted}
         autoCapitalize="none"
       />
-      {errors.startDate ? <Text style={styles.error}>{errors.startDate}</Text> : null}
+      {errors.startDate ? <FieldError>{errors.startDate}</FieldError> : null}
 
-      <Text style={styles.label}>종료일</Text>
-      <TextInput
-        style={styles.input}
+      <FieldLabel>종료일</FieldLabel>
+      <FieldInput
         value={endDate}
         onChangeText={(value) => {
           setEndDate(value);
           clearFieldError('endDate');
         }}
         placeholder="YYYY-MM-DD"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={theme.textMuted}
         autoCapitalize="none"
       />
-      {errors.endDate ? <Text style={styles.error}>{errors.endDate}</Text> : null}
+      {errors.endDate ? <FieldError>{errors.endDate}</FieldError> : null}
 
-      <Pressable
-        style={styles.submitButton}
-        onPress={handleAddPeriod}
-        disabled={isSaving || isLoading || loadError}
-      >
-        <Text style={styles.submitButtonText}>{isSaving ? '추가 중...' : '기간 추가'}</Text>
-      </Pressable>
+      <SubmitButton onPress={handleAddPeriod} disabled={isSaving || isLoading || loadError}>
+        <SubmitButtonText>{isSaving ? '추가 중...' : '기간 추가'}</SubmitButtonText>
+      </SubmitButton>
 
-      {submitStatus === 'success' ? <Text style={styles.statusSuccess}>기간이 추가되었습니다.</Text> : null}
+      {submitStatus === 'success' ? <StatusSuccessText>기간이 추가되었습니다.</StatusSuccessText> : null}
       {submitStatus === 'error' ? (
-        <Text style={styles.statusError}>처리하지 못했습니다. 다시 시도해주세요.</Text>
+        <StatusErrorText>처리하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
       ) : null}
 
-      <Text style={[styles.heading, styles.sectionHeading]}>현재/예정 기간</Text>
-      {deleteError ? <Text style={styles.error}>삭제하지 못했습니다. 다시 시도해주세요.</Text> : null}
+      <SectionHeading>현재/예정 기간</SectionHeading>
+      {deleteError ? <FieldError>삭제하지 못했습니다. 다시 시도해주세요.</FieldError> : null}
       {isLoading ? null : loadError ? (
-        <Text style={styles.error}>기간을 불러오지 못했습니다.</Text>
+        <FieldError>기간을 불러오지 못했습니다.</FieldError>
       ) : currentPeriods.length === 0 ? (
-        <Text style={styles.empty}>등록된 기간이 없습니다.</Text>
+        <EmptyText>등록된 기간이 없습니다.</EmptyText>
       ) : (
         currentPeriods.map(renderPeriodRow)
       )}
 
-      <Text style={[styles.heading, styles.sectionHeading]}>지난 기간</Text>
+      <SectionHeading>지난 기간</SectionHeading>
       {isLoading || loadError ? null : pastPeriods.length === 0 ? (
-        <Text style={styles.empty}>지난 기간이 없습니다.</Text>
+        <EmptyText>지난 기간이 없습니다.</EmptyText>
       ) : (
         pastPeriods.map(renderPeriodRow)
       )}
-    </ScrollView>
+    </Screen>
   );
 }
 
@@ -348,8 +343,7 @@ function PeriodRow({
   onSaveExpense: (id: string, input: ExpenseInput) => Promise<ExpenseActionResult>;
   onDeleteExpense: (id: string) => Promise<ExpenseActionResult>;
 }) {
-  const colors = useAppColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
   const [incomeText, setIncomeText] = useState(String(period.income));
   const [saveState, setSaveState] = useState<IncomeSaveState>({ status: 'idle' });
   // Tracks whether the user has edited the field since it was last synced
@@ -386,22 +380,21 @@ function PeriodRow({
 
   return (
     <View>
-      <View style={styles.row}>
-        <Pressable style={styles.rowMain} onPress={onToggle}>
-          <Text style={styles.rowText}>
+      <PeriodHeaderRow>
+        <PeriodTogglePressable onPress={onToggle}>
+          <PeriodRangeText>
             {period.startDate} ~ {period.endDate}
-          </Text>
-        </Pressable>
+          </PeriodRangeText>
+        </PeriodTogglePressable>
         <Pressable onPress={onDelete}>
-          <Text style={styles.deleteText}>삭제</Text>
+          <DeleteText>삭제</DeleteText>
         </Pressable>
-      </View>
+      </PeriodHeaderRow>
       {detail ? (
-        <View style={styles.detail}>
-          <Text style={styles.label}>수입</Text>
-          <View style={styles.incomeRow}>
-            <TextInput
-              style={[styles.input, styles.incomeInput]}
+        <DetailBox>
+          <FieldLabel>수입</FieldLabel>
+          <IncomeRow>
+            <IncomeInput
               value={incomeText}
               onChangeText={(value) => {
                 setIncomeText(value);
@@ -409,29 +402,23 @@ function PeriodRow({
                 setSaveState({ status: 'idle' });
               }}
               placeholder="예: 3000000"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={theme.textMuted}
               keyboardType="numeric"
             />
-            <Pressable
-              style={styles.incomeSaveButton}
-              onPress={handleSaveIncome}
-              disabled={saveState.status === 'saving'}
-            >
-              <Text style={styles.incomeSaveButtonText}>
+            <IncomeSaveButton onPress={handleSaveIncome} disabled={saveState.status === 'saving'}>
+              <IncomeSaveButtonText>
                 {saveState.status === 'saving' ? '저장 중...' : '저장'}
-              </Text>
-            </Pressable>
-          </View>
+              </IncomeSaveButtonText>
+            </IncomeSaveButton>
+          </IncomeRow>
           {saveState.status === 'invalid' || saveState.status === 'error' ? (
-            <Text style={styles.error}>{saveState.message}</Text>
+            <FieldError>{saveState.message}</FieldError>
           ) : null}
-          {saveState.status === 'success' ? (
-            <Text style={styles.statusSuccess}>수입이 저장되었습니다.</Text>
-          ) : null}
-          <Text style={styles.detailTotal}>순저축 {formatCurrency(netSavings)}</Text>
-          <Text style={styles.detailTotal}>지출 합계 {formatCurrency(detail.total)}</Text>
+          {saveState.status === 'success' ? <StatusSuccessText>수입이 저장되었습니다.</StatusSuccessText> : null}
+          <DetailTotalText>순저축 {formatCurrency(netSavings)}</DetailTotalText>
+          <DetailTotalText>지출 합계 {formatCurrency(detail.total)}</DetailTotalText>
           {detail.expenses.length === 0 ? (
-            <Text style={styles.empty}>이 기간에 속하는 지출내역이 없습니다.</Text>
+            <EmptyText>이 기간에 속하는 지출내역이 없습니다.</EmptyText>
           ) : (
             <>
               <CategoryPieChart stats={detail.categoryStats} />
@@ -450,66 +437,135 @@ function PeriodRow({
               ))}
             </>
           )}
-        </View>
+        </DetailBox>
       ) : null}
     </View>
   );
 }
 
-function createStyles(colors: AppColors) {
-  return StyleSheet.create({
-    screen: { backgroundColor: colors.background },
-    container: { padding: 16, gap: 4 },
-    heading: { fontSize: 20, fontWeight: '600', color: colors.text },
-    sectionHeading: { marginTop: 24, marginBottom: 8 },
-    label: { fontSize: 14, fontWeight: '600', marginTop: 12, color: colors.text },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 10,
-      marginTop: 4,
-      color: colors.text,
-    },
-    error: { marginTop: 4, color: colors.danger },
-    empty: { color: colors.textMuted },
-    submitButton: {
-      marginTop: 24,
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 14,
-      alignItems: 'center',
-    },
-    submitButtonText: { color: colors.onPrimary, fontWeight: '600', fontSize: 16 },
-    statusSuccess: { marginTop: 12, color: colors.success, textAlign: 'center' },
-    statusError: { marginTop: 12, color: colors.danger, textAlign: 'center' },
-    row: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    rowMain: { flexShrink: 1, flexGrow: 1 },
-    rowText: { fontSize: 16, color: colors.text },
-    deleteText: { color: colors.danger },
-    detail: {
-      paddingVertical: 8,
-      paddingHorizontal: 8,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      marginBottom: 8,
-    },
-    detailTotal: { fontSize: 14, fontWeight: '600', marginBottom: 4, color: colors.text },
-    incomeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    incomeInput: { flex: 1, marginTop: 0 },
-    incomeSaveButton: {
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 10,
-      paddingHorizontal: 14,
-    },
-    incomeSaveButtonText: { color: colors.onPrimary, fontWeight: '600' },
-  });
-}
+const Screen = styled(ScrollView)`
+  background-color: ${(props) => props.theme.background};
+`;
+
+const Heading = styled.Text`
+  font-size: 20px;
+  font-weight: 600;
+  color: ${(props) => props.theme.text};
+`;
+
+const SectionHeading = styled(Heading)`
+  margin-top: 24px;
+  margin-bottom: 8px;
+`;
+
+const FieldLabel = styled.Text`
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 12px;
+  color: ${(props) => props.theme.text};
+`;
+
+const FieldInput = styled(TextInput)`
+  border-width: 1px;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 4px;
+  border-color: ${(props) => props.theme.border};
+  color: ${(props) => props.theme.text};
+`;
+
+const FieldError = styled.Text`
+  margin-top: 4px;
+  color: ${(props) => props.theme.danger};
+`;
+
+const EmptyText = styled.Text`
+  color: ${(props) => props.theme.textMuted};
+`;
+
+const SubmitButton = styled(Pressable)`
+  margin-top: 24px;
+  border-radius: 8px;
+  padding-vertical: 14px;
+  align-items: center;
+  background-color: ${(props) => props.theme.primary};
+`;
+
+const SubmitButtonText = styled.Text`
+  color: ${(props) => props.theme.onPrimary};
+  font-weight: 600;
+  font-size: 16px;
+`;
+
+const StatusSuccessText = styled.Text`
+  margin-top: 12px;
+  text-align: center;
+  color: ${(props) => props.theme.success};
+`;
+
+const StatusErrorText = styled.Text`
+  margin-top: 12px;
+  text-align: center;
+  color: ${(props) => props.theme.danger};
+`;
+
+const PeriodHeaderRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-vertical: 10px;
+  border-bottom-width: 1px;
+  border-bottom-color: ${(props) => props.theme.border};
+`;
+
+const PeriodTogglePressable = styled(Pressable)`
+  flex-shrink: 1;
+  flex-grow: 1;
+`;
+
+const PeriodRangeText = styled.Text`
+  font-size: 16px;
+  color: ${(props) => props.theme.text};
+`;
+
+const DeleteText = styled.Text`
+  color: ${(props) => props.theme.danger};
+`;
+
+const DetailBox = styled.View`
+  padding-vertical: 8px;
+  padding-horizontal: 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background-color: ${(props) => props.theme.card};
+`;
+
+const DetailTotalText = styled.Text`
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: ${(props) => props.theme.text};
+`;
+
+const IncomeRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+`;
+
+const IncomeInput = styled(FieldInput)`
+  flex: 1;
+  margin-top: 0px;
+`;
+
+const IncomeSaveButton = styled(Pressable)`
+  border-radius: 8px;
+  padding-vertical: 10px;
+  padding-horizontal: 14px;
+  background-color: ${(props) => props.theme.primary};
+`;
+
+const IncomeSaveButtonText = styled.Text`
+  font-weight: 600;
+  color: ${(props) => props.theme.onPrimary};
+`;

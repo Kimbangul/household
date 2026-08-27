@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
+import styled, { useTheme } from 'styled-components/native';
 
 import {
   canDeleteCategory,
@@ -14,14 +15,14 @@ import type { Category, Expense } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import { useDarkMode } from '../src/theme/DarkModeContext';
-import { useAppColors, type AppColors } from '../src/theme/useAppColors';
 import { generateId } from '../src/utils/generateId';
+
+const CONTENT_CONTAINER_STYLE = { padding: 16, gap: 4 };
 
 export default function SettingsScreen() {
   const repository = useRepository();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
-  const colors = useAppColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,98 +125,132 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>화면 설정</Text>
-      <View style={styles.row}>
-        <Text style={styles.rowText}>다크 모드</Text>
+    <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
+      <Heading>화면 설정</Heading>
+      <Row>
+        <RowText>다크 모드</RowText>
         <Switch value={isDarkMode} onValueChange={() => toggleDarkMode()} />
-      </View>
+      </Row>
 
-      <Text style={[styles.heading, styles.sectionHeading]}>카테고리 관리</Text>
+      <SectionHeading>카테고리 관리</SectionHeading>
 
-      <Text style={styles.label}>새 카테고리</Text>
-      <TextInput
-        style={styles.input}
+      <FieldLabel>새 카테고리</FieldLabel>
+      <FieldInput
         value={name}
         onChangeText={(value) => {
           setName(value);
           clearFieldError('name');
         }}
         placeholder="예: 반려동물"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={theme.textMuted}
       />
-      {errors.name ? <Text style={styles.error}>{errors.name}</Text> : null}
+      {errors.name ? <FieldError>{errors.name}</FieldError> : null}
 
-      <Pressable
-        style={styles.submitButton}
-        onPress={handleAddCategory}
-        disabled={isSaving || isLoading || loadError}
-      >
-        <Text style={styles.submitButtonText}>{isSaving ? '추가 중...' : '카테고리 추가'}</Text>
-      </Pressable>
+      <SubmitButton onPress={handleAddCategory} disabled={isSaving || isLoading || loadError}>
+        <SubmitButtonText>{isSaving ? '추가 중...' : '카테고리 추가'}</SubmitButtonText>
+      </SubmitButton>
 
-      {submitStatus === 'success' ? (
-        <Text style={styles.statusSuccess}>카테고리가 추가되었습니다.</Text>
-      ) : null}
+      {submitStatus === 'success' ? <StatusSuccessText>카테고리가 추가되었습니다.</StatusSuccessText> : null}
       {submitStatus === 'error' ? (
-        <Text style={styles.statusError}>처리하지 못했습니다. 다시 시도해주세요.</Text>
+        <StatusErrorText>처리하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
       ) : null}
 
-      <Text style={[styles.heading, styles.sectionHeading]}>전체 카테고리</Text>
-      {deleteError ? <Text style={styles.error}>삭제하지 못했습니다. 다시 시도해주세요.</Text> : null}
+      <SectionHeading>전체 카테고리</SectionHeading>
+      {deleteError ? <FieldError>삭제하지 못했습니다. 다시 시도해주세요.</FieldError> : null}
       {isLoading ? null : loadError ? (
-        <Text style={styles.error}>카테고리를 불러오지 못했습니다.</Text>
+        <FieldError>카테고리를 불러오지 못했습니다.</FieldError>
       ) : (
         categories.map((category) => (
-          <View key={category.id} style={styles.row}>
-            <Text style={styles.rowText}>{category.name}</Text>
+          <Row key={category.id}>
+            <RowText>{category.name}</RowText>
             {canDeleteCategory(category) ? (
               <Pressable onPress={() => handleDeleteCategory(category)}>
-                <Text style={styles.deleteText}>삭제</Text>
+                <DeleteText>삭제</DeleteText>
               </Pressable>
             ) : null}
-          </View>
+          </Row>
         ))
       )}
-    </ScrollView>
+    </Screen>
   );
 }
 
-function createStyles(colors: AppColors) {
-  return StyleSheet.create({
-    screen: { backgroundColor: colors.background },
-    container: { padding: 16, gap: 4 },
-    heading: { fontSize: 20, fontWeight: '600', color: colors.text },
-    sectionHeading: { marginTop: 24, marginBottom: 8 },
-    label: { fontSize: 14, fontWeight: '600', marginTop: 12, color: colors.text },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 10,
-      marginTop: 4,
-      color: colors.text,
-    },
-    error: { marginTop: 4, color: colors.danger },
-    submitButton: {
-      marginTop: 24,
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 14,
-      alignItems: 'center',
-    },
-    submitButtonText: { color: colors.onPrimary, fontWeight: '600', fontSize: 16 },
-    statusSuccess: { marginTop: 12, color: colors.success, textAlign: 'center' },
-    statusError: { marginTop: 12, color: colors.danger, textAlign: 'center' },
-    row: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    rowText: { fontSize: 16, color: colors.text },
-    deleteText: { color: colors.danger },
-  });
-}
+const Screen = styled(ScrollView)`
+  background-color: ${(props) => props.theme.background};
+`;
+
+const Heading = styled.Text`
+  font-size: 20px;
+  font-weight: 600;
+  color: ${(props) => props.theme.text};
+`;
+
+const SectionHeading = styled(Heading)`
+  margin-top: 24px;
+  margin-bottom: 8px;
+`;
+
+const FieldLabel = styled.Text`
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 12px;
+  color: ${(props) => props.theme.text};
+`;
+
+const FieldInput = styled(TextInput)`
+  border-width: 1px;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 4px;
+  border-color: ${(props) => props.theme.border};
+  color: ${(props) => props.theme.text};
+`;
+
+const FieldError = styled.Text`
+  margin-top: 4px;
+  color: ${(props) => props.theme.danger};
+`;
+
+const SubmitButton = styled(Pressable)`
+  margin-top: 24px;
+  border-radius: 8px;
+  padding-vertical: 14px;
+  align-items: center;
+  background-color: ${(props) => props.theme.primary};
+`;
+
+const SubmitButtonText = styled.Text`
+  color: ${(props) => props.theme.onPrimary};
+  font-weight: 600;
+  font-size: 16px;
+`;
+
+const StatusSuccessText = styled.Text`
+  margin-top: 12px;
+  text-align: center;
+  color: ${(props) => props.theme.success};
+`;
+
+const StatusErrorText = styled.Text`
+  margin-top: 12px;
+  text-align: center;
+  color: ${(props) => props.theme.danger};
+`;
+
+const Row = styled(View)`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-vertical: 10px;
+  border-bottom-width: 1px;
+  border-bottom-color: ${(props) => props.theme.border};
+`;
+
+const RowText = styled.Text`
+  font-size: 16px;
+  color: ${(props) => props.theme.text};
+`;
+
+const DeleteText = styled.Text`
+  color: ${(props) => props.theme.danger};
+`;

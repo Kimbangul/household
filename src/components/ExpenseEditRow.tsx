@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, TextInput, View } from 'react-native';
+import styled, { useTheme } from 'styled-components/native';
 
 import { resolveCategoryLabel } from '../domain/categoryLookup';
 import { formatCurrency } from '../domain/currency';
 import { validateExpenseInput, type ExpenseInput, type ExpenseInputField } from '../domain/expense';
 import type { Category, Expense } from '../domain/types';
-import { useAppColors, type AppColors } from '../theme/useAppColors';
 import { parseDigitAmount } from '../utils/parseDigitAmount';
 import { CategoryChipPicker } from './CategoryChipPicker';
 
@@ -38,8 +38,7 @@ export function ExpenseEditRow({
   onDelete: (id: string) => Promise<ExpenseActionResult>;
   variant?: 'standalone' | 'compact';
 }) {
-  const colors = useAppColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
   const [date, setDate] = useState(expense.date);
   const [item, setItem] = useState(expense.item);
   const [amountText, setAmountText] = useState(String(expense.amount));
@@ -104,61 +103,56 @@ export function ExpenseEditRow({
 
   return (
     <View>
-      <Pressable style={isCompact ? styles.rowCompact : styles.rowStandalone} onPress={onToggle}>
-        <View style={styles.rowMain}>
-          <Text style={isCompact ? styles.itemCompact : styles.itemStandalone}>{expense.item}</Text>
-          <Text style={styles.meta}>
+      <SummaryRow $compact={isCompact} onPress={onToggle}>
+        <RowMain>
+          <ItemText $compact={isCompact}>{expense.item}</ItemText>
+          <MetaText>
             {expense.date} · {resolveCategoryLabel(expense.categoryId, categoryNames)}
-          </Text>
-        </View>
-        <Text style={isCompact ? styles.amountCompact : styles.amountStandalone}>
-          {formatCurrency(expense.amount)}
-        </Text>
-      </Pressable>
+          </MetaText>
+        </RowMain>
+        <AmountText $compact={isCompact}>{formatCurrency(expense.amount)}</AmountText>
+      </SummaryRow>
       {isExpanded ? (
-        <View style={styles.editForm}>
-          <Text style={styles.label}>날짜</Text>
-          <TextInput
-            style={styles.input}
+        <EditForm>
+          <FieldLabel>날짜</FieldLabel>
+          <FieldInput
             value={date}
             onChangeText={(value) => {
               setDate(value);
               setActionState({ status: 'idle' });
             }}
             placeholder="YYYY-MM-DD"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={theme.textMuted}
             autoCapitalize="none"
           />
-          {errors.date ? <Text style={styles.fieldError}>{errors.date}</Text> : null}
+          {errors.date ? <FieldError>{errors.date}</FieldError> : null}
 
-          <Text style={styles.label}>품목</Text>
-          <TextInput
-            style={styles.input}
+          <FieldLabel>품목</FieldLabel>
+          <FieldInput
             value={item}
             onChangeText={(value) => {
               setItem(value);
               setActionState({ status: 'idle' });
             }}
             placeholder="예: 점심"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={theme.textMuted}
           />
-          {errors.item ? <Text style={styles.fieldError}>{errors.item}</Text> : null}
+          {errors.item ? <FieldError>{errors.item}</FieldError> : null}
 
-          <Text style={styles.label}>금액</Text>
-          <TextInput
-            style={styles.input}
+          <FieldLabel>금액</FieldLabel>
+          <FieldInput
             value={amountText}
             onChangeText={(value) => {
               setAmountText(value);
               setActionState({ status: 'idle' });
             }}
             placeholder="예: 12000"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={theme.textMuted}
             keyboardType="numeric"
           />
-          {errors.amount ? <Text style={styles.fieldError}>{errors.amount}</Text> : null}
+          {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
 
-          <Text style={styles.label}>카테고리</Text>
+          <FieldLabel>카테고리</FieldLabel>
           <CategoryChipPicker
             categories={categories}
             selectedId={categoryId}
@@ -167,99 +161,140 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
           />
-          {errors.categoryId ? <Text style={styles.fieldError}>{errors.categoryId}</Text> : null}
+          {errors.categoryId ? <FieldError>{errors.categoryId}</FieldError> : null}
 
-          <Text style={styles.label}>비고 (선택)</Text>
-          <TextInput
-            style={[styles.input, styles.memoInput]}
+          <FieldLabel>비고 (선택)</FieldLabel>
+          <MemoInput
             value={memo}
             onChangeText={(value) => {
               setMemo(value);
               setActionState({ status: 'idle' });
             }}
             placeholder="메모"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={theme.textMuted}
             multiline
           />
 
-          {actionState.status === 'error' ? (
-            <Text style={styles.fieldError}>{actionState.message}</Text>
-          ) : null}
+          {actionState.status === 'error' ? <FieldError>{actionState.message}</FieldError> : null}
           {actionState.status === 'success' ? (
-            <Text style={styles.statusSuccess}>지출내역이 저장되었습니다.</Text>
+            <StatusSuccessText>지출내역이 저장되었습니다.</StatusSuccessText>
           ) : null}
 
-          <View style={styles.actionRow}>
-            <Pressable style={styles.saveButton} onPress={handleSave} disabled={isBusy}>
-              <Text style={styles.saveButtonText}>
-                {actionState.status === 'saving' ? '저장 중...' : '저장'}
-              </Text>
-            </Pressable>
-            <Pressable style={styles.deleteButton} onPress={handleDelete} disabled={isBusy}>
-              <Text style={styles.deleteButtonText}>
+          <ActionRow>
+            <SaveButton onPress={handleSave} disabled={isBusy}>
+              <SaveButtonText>{actionState.status === 'saving' ? '저장 중...' : '저장'}</SaveButtonText>
+            </SaveButton>
+            <DeleteButton onPress={handleDelete} disabled={isBusy}>
+              <DeleteButtonText>
                 {actionState.status === 'deleting' ? '삭제 중...' : '삭제'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+              </DeleteButtonText>
+            </DeleteButton>
+          </ActionRow>
+        </EditForm>
       ) : null}
     </View>
   );
 }
 
-function createStyles(colors: AppColors) {
-  return StyleSheet.create({
-    rowStandalone: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    rowCompact: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 6,
-    },
-    rowMain: { flexShrink: 1, flexGrow: 1 },
-    itemStandalone: { fontSize: 16, color: colors.text },
-    itemCompact: { fontSize: 14, color: colors.text },
-    meta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-    amountStandalone: { fontSize: 16, fontWeight: '600', color: colors.text },
-    amountCompact: { fontSize: 14, fontWeight: '600', color: colors.text },
-    editForm: { paddingVertical: 12, gap: 4 },
-    label: { fontSize: 14, fontWeight: '600', marginTop: 8, color: colors.text },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 10,
-      marginTop: 4,
-      color: colors.text,
-    },
-    memoInput: { minHeight: 60, textAlignVertical: 'top' },
-    fieldError: { marginTop: 4, color: colors.danger },
-    statusSuccess: { marginTop: 8, color: colors.success },
-    actionRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
-    saveButton: {
-      flex: 1,
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 14,
-      alignItems: 'center',
-    },
-    saveButtonText: { color: colors.onPrimary, fontWeight: '600', fontSize: 16 },
-    deleteButton: {
-      flex: 1,
-      backgroundColor: colors.background,
-      borderWidth: 1,
-      borderColor: colors.danger,
-      borderRadius: 8,
-      paddingVertical: 14,
-      alignItems: 'center',
-    },
-    deleteButtonText: { color: colors.danger, fontWeight: '600', fontSize: 16 },
-  });
-}
+const SummaryRow = styled(Pressable)<{ $compact: boolean }>`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-vertical: ${(props) => (props.$compact ? '6px' : '10px')};
+  border-bottom-width: ${(props) => (props.$compact ? '0px' : '1px')};
+  border-bottom-color: ${(props) => props.theme.border};
+`;
+
+const RowMain = styled.View`
+  flex-shrink: 1;
+  flex-grow: 1;
+`;
+
+const ItemText = styled.Text<{ $compact: boolean }>`
+  font-size: ${(props) => (props.$compact ? '14px' : '16px')};
+  color: ${(props) => props.theme.text};
+`;
+
+const MetaText = styled.Text`
+  font-size: 12px;
+  margin-top: 2px;
+  color: ${(props) => props.theme.textMuted};
+`;
+
+const AmountText = styled.Text<{ $compact: boolean }>`
+  font-size: ${(props) => (props.$compact ? '14px' : '16px')};
+  font-weight: 600;
+  color: ${(props) => props.theme.text};
+`;
+
+const EditForm = styled.View`
+  padding-vertical: 12px;
+  gap: 4px;
+`;
+
+const FieldLabel = styled.Text`
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+  color: ${(props) => props.theme.text};
+`;
+
+const FieldInput = styled(TextInput)`
+  border-width: 1px;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 4px;
+  border-color: ${(props) => props.theme.border};
+  color: ${(props) => props.theme.text};
+`;
+
+const MemoInput = styled(FieldInput)`
+  min-height: 60px;
+  text-align-vertical: top;
+`;
+
+const FieldError = styled.Text`
+  margin-top: 4px;
+  color: ${(props) => props.theme.danger};
+`;
+
+const StatusSuccessText = styled.Text`
+  margin-top: 8px;
+  color: ${(props) => props.theme.success};
+`;
+
+const ActionRow = styled.View`
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 16px;
+`;
+
+const SaveButton = styled(Pressable)`
+  flex: 1;
+  border-radius: 8px;
+  padding-vertical: 14px;
+  align-items: center;
+  background-color: ${(props) => props.theme.primary};
+`;
+
+const SaveButtonText = styled.Text`
+  font-weight: 600;
+  font-size: 16px;
+  color: ${(props) => props.theme.onPrimary};
+`;
+
+const DeleteButton = styled(Pressable)`
+  flex: 1;
+  border-width: 1px;
+  border-radius: 8px;
+  padding-vertical: 14px;
+  align-items: center;
+  background-color: ${(props) => props.theme.background};
+  border-color: ${(props) => props.theme.danger};
+`;
+
+const DeleteButtonText = styled.Text`
+  font-weight: 600;
+  font-size: 16px;
+  color: ${(props) => props.theme.danger};
+`;

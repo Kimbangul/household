@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView } from 'react-native';
+import styled from 'styled-components/native';
 
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
@@ -11,15 +12,13 @@ import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
-import { useAppColors, type AppColors } from '../src/theme/useAppColors';
 import { todayAsDateString } from '../src/utils/today';
 
 const RECENT_EXPENSE_LIMIT = 20;
+const CONTENT_CONTAINER_STYLE = { padding: 16 };
 
 export default function MainScreen() {
   const repository = useRepository();
-  const colors = useAppColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
@@ -119,35 +118,35 @@ export default function MainScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>최근 기간 대비 지출</Text>
+    <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
+      <Heading>최근 기간 대비 지출</Heading>
       {isLoading ? null : loadError ? (
-        <Text style={styles.error}>기간을 불러오지 못했습니다.</Text>
+        <ErrorText>기간을 불러오지 못했습니다.</ErrorText>
       ) : periodComparison ? (
-        <View style={styles.comparisonBox}>
-          <Text style={styles.comparisonPeriods}>
+        <ComparisonBox>
+          <ComparisonPeriodsText>
             이전: {periodComparison.previous.startDate} ~ {periodComparison.previous.endDate}
             {isPastPeriod(periodComparison.previous, today) ? '' : ' (진행 중)'}
-          </Text>
-          <Text style={styles.comparisonPeriods}>
+          </ComparisonPeriodsText>
+          <ComparisonPeriodsText>
             최근: {periodComparison.latest.startDate} ~ {periodComparison.latest.endDate}
             {isPastPeriod(periodComparison.latest, today) ? '' : ' (진행 중)'}
-          </Text>
-          <Text style={styles.comparisonAmount}>
+          </ComparisonPeriodsText>
+          <ComparisonAmountText>
             {periodComparison.difference === 0
               ? '지출 변동이 없습니다.'
               : `${formatCurrency(Math.abs(periodComparison.difference))} ${periodComparison.difference > 0 ? '증가' : '감소'}`}
-          </Text>
-        </View>
+          </ComparisonAmountText>
+        </ComparisonBox>
       ) : (
-        <Text style={styles.empty}>비교할 이전 기간이 없습니다.</Text>
+        <EmptyText>비교할 이전 기간이 없습니다.</EmptyText>
       )}
 
-      <Text style={[styles.heading, styles.sectionHeading]}>최근 지출</Text>
+      <SectionHeading>최근 지출</SectionHeading>
       {isLoading ? null : loadError ? (
-        <Text style={styles.error}>지출내역을 불러오지 못했습니다.</Text>
+        <ErrorText>지출내역을 불러오지 못했습니다.</ErrorText>
       ) : recentExpenses.length === 0 ? (
-        <Text style={styles.empty}>아직 등록된 지출내역이 없습니다.</Text>
+        <EmptyText>아직 등록된 지출내역이 없습니다.</EmptyText>
       ) : (
         recentExpenses.map((expense) => (
           <ExpenseEditRow
@@ -164,25 +163,47 @@ export default function MainScreen() {
           />
         ))
       )}
-    </ScrollView>
+    </Screen>
   );
 }
 
-function createStyles(colors: AppColors) {
-  return StyleSheet.create({
-    screen: { backgroundColor: colors.background },
-    container: { padding: 16 },
-    heading: { fontSize: 20, fontWeight: '600', marginBottom: 12, color: colors.text },
-    sectionHeading: { marginTop: 24 },
-    empty: { color: colors.textMuted },
-    error: { color: colors.danger },
-    comparisonBox: {
-      padding: 12,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      gap: 4,
-    },
-    comparisonPeriods: { fontSize: 12, color: colors.textMuted },
-    comparisonAmount: { fontSize: 18, fontWeight: '600', color: colors.text },
-  });
-}
+const Screen = styled(ScrollView)`
+  background-color: ${(props) => props.theme.background};
+`;
+
+const Heading = styled.Text`
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: ${(props) => props.theme.text};
+`;
+
+const SectionHeading = styled(Heading)`
+  margin-top: 24px;
+`;
+
+const EmptyText = styled.Text`
+  color: ${(props) => props.theme.textMuted};
+`;
+
+const ErrorText = styled.Text`
+  color: ${(props) => props.theme.danger};
+`;
+
+const ComparisonBox = styled.View`
+  padding: 12px;
+  border-radius: 8px;
+  gap: 4px;
+  background-color: ${(props) => props.theme.card};
+`;
+
+const ComparisonPeriodsText = styled.Text`
+  font-size: 12px;
+  color: ${(props) => props.theme.textMuted};
+`;
+
+const ComparisonAmountText = styled.Text`
+  font-size: 18px;
+  font-weight: 600;
+  color: ${(props) => props.theme.text};
+`;

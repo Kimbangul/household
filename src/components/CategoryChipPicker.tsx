@@ -1,8 +1,6 @@
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import styled from 'styled-components/native';
 
 import type { Category } from '../domain/types';
-import { useAppColors, type AppColors } from '../theme/useAppColors';
 
 export function CategoryChipPicker({
   categories,
@@ -13,40 +11,37 @@ export function CategoryChipPicker({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
-  const colors = useAppColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
   return (
-    <View style={styles.categoryList}>
+    <CategoryList>
       {categories.map((category) => (
-        <Pressable
+        <CategoryChip
           key={category.id}
           onPress={() => onSelect(category.id)}
-          style={[styles.categoryChip, selectedId === category.id && styles.categoryChipSelected]}
+          $selected={selectedId === category.id}
         >
-          <Text
-            style={[styles.categoryChipText, selectedId === category.id && styles.categoryChipTextSelected]}
-          >
-            {category.name}
-          </Text>
-        </Pressable>
+          <CategoryChipText $selected={selectedId === category.id}>{category.name}</CategoryChipText>
+        </CategoryChip>
       ))}
-    </View>
+    </CategoryList>
   );
 }
 
-function createStyles(colors: AppColors) {
-  return StyleSheet.create({
-    categoryList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-    categoryChip: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 16,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-    },
-    categoryChipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-    categoryChipText: { color: colors.text },
-    categoryChipTextSelected: { color: colors.onPrimary },
-  });
-}
+const CategoryList = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+`;
+
+const CategoryChip = styled.Pressable<{ $selected: boolean }>`
+  border-width: 1px;
+  border-radius: 16px;
+  padding-vertical: 6px;
+  padding-horizontal: 12px;
+  border-color: ${(props) => (props.$selected ? props.theme.primary : props.theme.border)};
+  background-color: ${(props) => (props.$selected ? props.theme.primary : 'transparent')};
+`;
+
+const CategoryChipText = styled.Text<{ $selected: boolean }>`
+  color: ${(props) => (props.$selected ? props.theme.onPrimary : props.theme.text)};
+`;

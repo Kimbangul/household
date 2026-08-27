@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, ScrollView, TextInput } from 'react-native';
+import styled, { useTheme } from 'styled-components/native';
 
 import { CategoryChipPicker } from '../src/components/CategoryChipPicker';
 import { formatCurrency } from '../src/domain/currency';
@@ -8,15 +9,15 @@ import { createExpense, validateExpenseInput, type ExpenseInputField } from '../
 import type { Category } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
-import { useAppColors, type AppColors } from '../src/theme/useAppColors';
 import { generateId } from '../src/utils/generateId';
 import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
 
+const CONTENT_CONTAINER_STYLE = { padding: 16, gap: 4 };
+
 export default function AddExpenseScreen() {
   const repository = useRepository();
-  const colors = useAppColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const theme = useTheme();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [date, setDate] = useState(todayAsDateString());
@@ -99,54 +100,51 @@ export default function AddExpenseScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.label}>날짜</Text>
-      <TextInput
-        style={styles.input}
+    <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
+      <FieldLabel>날짜</FieldLabel>
+      <FieldInput
         value={date}
         onChangeText={(value) => {
           setDate(value);
           clearFieldError('date');
         }}
         placeholder="YYYY-MM-DD"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={theme.textMuted}
         autoCapitalize="none"
       />
-      {errors.date ? <Text style={styles.error}>{errors.date}</Text> : null}
+      {errors.date ? <FieldError>{errors.date}</FieldError> : null}
 
-      <Text style={styles.label}>품목</Text>
-      <TextInput
-        style={styles.input}
+      <FieldLabel>품목</FieldLabel>
+      <FieldInput
         value={item}
         onChangeText={(value) => {
           setItem(value);
           clearFieldError('item');
         }}
         placeholder="예: 점심"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={theme.textMuted}
       />
-      {errors.item ? <Text style={styles.error}>{errors.item}</Text> : null}
+      {errors.item ? <FieldError>{errors.item}</FieldError> : null}
 
-      <Text style={styles.label}>금액</Text>
-      <TextInput
-        style={styles.input}
+      <FieldLabel>금액</FieldLabel>
+      <FieldInput
         value={amountText}
         onChangeText={(value) => {
           setAmountText(value);
           clearFieldError('amount');
         }}
         placeholder="예: 12000"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={theme.textMuted}
         keyboardType="numeric"
       />
       {amountText.length > 0 && Number.isFinite(amount) && amount > 0 ? (
-        <Text style={styles.preview}>{formatCurrency(amount)}</Text>
+        <PreviewText>{formatCurrency(amount)}</PreviewText>
       ) : null}
-      {errors.amount ? <Text style={styles.error}>{errors.amount}</Text> : null}
+      {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
 
-      <Text style={styles.label}>카테고리</Text>
+      <FieldLabel>카테고리</FieldLabel>
       {categoriesError ? (
-        <Text style={styles.error}>카테고리를 불러오지 못했습니다. 앱을 다시 시작해주세요.</Text>
+        <FieldError>카테고리를 불러오지 못했습니다. 앱을 다시 시작해주세요.</FieldError>
       ) : (
         <CategoryChipPicker
           categories={categories}
@@ -157,60 +155,89 @@ export default function AddExpenseScreen() {
           }}
         />
       )}
-      {errors.categoryId ? <Text style={styles.error}>{errors.categoryId}</Text> : null}
+      {errors.categoryId ? <FieldError>{errors.categoryId}</FieldError> : null}
 
-      <Text style={styles.label}>비고 (선택)</Text>
-      <TextInput
-        style={[styles.input, styles.memoInput]}
+      <FieldLabel>비고 (선택)</FieldLabel>
+      <MemoInput
         value={memo}
         onChangeText={(value) => {
           setMemo(value);
           setSubmitStatus(null);
         }}
         placeholder="메모"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={theme.textMuted}
         multiline
       />
 
-      <Pressable style={styles.submitButton} onPress={handleSubmit} disabled={isSaving}>
-        <Text style={styles.submitButtonText}>{isSaving ? '저장 중...' : '저장'}</Text>
-      </Pressable>
+      <SubmitButton onPress={handleSubmit} disabled={isSaving}>
+        <SubmitButtonText>{isSaving ? '저장 중...' : '저장'}</SubmitButtonText>
+      </SubmitButton>
 
-      {submitStatus === 'success' ? (
-        <Text style={styles.statusSuccess}>지출내역이 저장되었습니다.</Text>
-      ) : null}
+      {submitStatus === 'success' ? <StatusSuccessText>지출내역이 저장되었습니다.</StatusSuccessText> : null}
       {submitStatus === 'error' ? (
-        <Text style={styles.statusError}>지출내역을 저장하지 못했습니다. 다시 시도해주세요.</Text>
+        <StatusErrorText>지출내역을 저장하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
       ) : null}
-    </ScrollView>
+    </Screen>
   );
 }
 
-function createStyles(colors: AppColors) {
-  return StyleSheet.create({
-    screen: { backgroundColor: colors.background },
-    container: { padding: 16, gap: 4 },
-    label: { fontSize: 14, fontWeight: '600', marginTop: 12, color: colors.text },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 10,
-      marginTop: 4,
-      color: colors.text,
-    },
-    memoInput: { minHeight: 60, textAlignVertical: 'top' },
-    preview: { marginTop: 4, color: colors.textMuted },
-    error: { marginTop: 4, color: colors.danger },
-    submitButton: {
-      marginTop: 24,
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 14,
-      alignItems: 'center',
-    },
-    submitButtonText: { color: colors.onPrimary, fontWeight: '600', fontSize: 16 },
-    statusSuccess: { marginTop: 12, color: colors.success, textAlign: 'center' },
-    statusError: { marginTop: 12, color: colors.danger, textAlign: 'center' },
-  });
-}
+const Screen = styled(ScrollView)`
+  background-color: ${(props) => props.theme.background};
+`;
+
+const FieldLabel = styled.Text`
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 12px;
+  color: ${(props) => props.theme.text};
+`;
+
+const FieldInput = styled(TextInput)`
+  border-width: 1px;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 4px;
+  border-color: ${(props) => props.theme.border};
+  color: ${(props) => props.theme.text};
+`;
+
+const MemoInput = styled(FieldInput)`
+  min-height: 60px;
+  text-align-vertical: top;
+`;
+
+const PreviewText = styled.Text`
+  margin-top: 4px;
+  color: ${(props) => props.theme.textMuted};
+`;
+
+const FieldError = styled.Text`
+  margin-top: 4px;
+  color: ${(props) => props.theme.danger};
+`;
+
+const SubmitButton = styled(Pressable)`
+  margin-top: 24px;
+  border-radius: 8px;
+  padding-vertical: 14px;
+  align-items: center;
+  background-color: ${(props) => props.theme.primary};
+`;
+
+const SubmitButtonText = styled.Text`
+  color: ${(props) => props.theme.onPrimary};
+  font-weight: 600;
+  font-size: 16px;
+`;
+
+const StatusSuccessText = styled.Text`
+  margin-top: 12px;
+  text-align: center;
+  color: ${(props) => props.theme.success};
+`;
+
+const StatusErrorText = styled.Text`
+  margin-top: 12px;
+  text-align: center;
+  color: ${(props) => props.theme.danger};
+`;
