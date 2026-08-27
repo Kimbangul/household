@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
 import { CategoryChipPicker } from '../src/components/CategoryChipPicker';
@@ -8,12 +8,15 @@ import { createExpense, validateExpenseInput, type ExpenseInputField } from '../
 import type { Category } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
+import { useAppColors, type AppColors } from '../src/theme/useAppColors';
 import { generateId } from '../src/utils/generateId';
 import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
 
 export default function AddExpenseScreen() {
   const repository = useRepository();
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [date, setDate] = useState(todayAsDateString());
@@ -96,7 +99,7 @@ export default function AddExpenseScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.label}>날짜</Text>
       <TextInput
         style={styles.input}
@@ -106,6 +109,7 @@ export default function AddExpenseScreen() {
           clearFieldError('date');
         }}
         placeholder="YYYY-MM-DD"
+        placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
       />
       {errors.date ? <Text style={styles.error}>{errors.date}</Text> : null}
@@ -119,6 +123,7 @@ export default function AddExpenseScreen() {
           clearFieldError('item');
         }}
         placeholder="예: 점심"
+        placeholderTextColor={colors.textMuted}
       />
       {errors.item ? <Text style={styles.error}>{errors.item}</Text> : null}
 
@@ -131,6 +136,7 @@ export default function AddExpenseScreen() {
           clearFieldError('amount');
         }}
         placeholder="예: 12000"
+        placeholderTextColor={colors.textMuted}
         keyboardType="numeric"
       />
       {amountText.length > 0 && Number.isFinite(amount) && amount > 0 ? (
@@ -162,6 +168,7 @@ export default function AddExpenseScreen() {
           setSubmitStatus(null);
         }}
         placeholder="메모"
+        placeholderTextColor={colors.textMuted}
         multiline
       />
 
@@ -179,27 +186,31 @@ export default function AddExpenseScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16, gap: 4 },
-  label: { fontSize: 14, fontWeight: '600', marginTop: 12 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 4,
-  },
-  memoInput: { minHeight: 60, textAlignVertical: 'top' },
-  preview: { marginTop: 4, color: '#888' },
-  error: { marginTop: 4, color: '#d33' },
-  submitButton: {
-    marginTop: 24,
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  submitButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  statusSuccess: { marginTop: 12, color: '#2a7d2a', textAlign: 'center' },
-  statusError: { marginTop: 12, color: '#d33', textAlign: 'center' },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    screen: { backgroundColor: colors.background },
+    container: { padding: 16, gap: 4 },
+    label: { fontSize: 14, fontWeight: '600', marginTop: 12, color: colors.text },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 10,
+      marginTop: 4,
+      color: colors.text,
+    },
+    memoInput: { minHeight: 60, textAlignVertical: 'top' },
+    preview: { marginTop: 4, color: colors.textMuted },
+    error: { marginTop: 4, color: colors.danger },
+    submitButton: {
+      marginTop: 24,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    submitButtonText: { color: colors.onPrimary, fontWeight: '600', fontSize: 16 },
+    statusSuccess: { marginTop: 12, color: colors.success, textAlign: 'center' },
+    statusError: { marginTop: 12, color: colors.danger, textAlign: 'center' },
+  });
+}

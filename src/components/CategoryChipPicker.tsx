@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Category } from '../domain/types';
+import { useAppColors, type AppColors } from '../theme/useAppColors';
 
 export function CategoryChipPicker({
   categories,
@@ -11,6 +13,9 @@ export function CategoryChipPicker({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.categoryList}>
       {categories.map((category) => (
@@ -30,16 +35,18 @@ export function CategoryChipPicker({
   );
 }
 
-const styles = StyleSheet.create({
-  categoryList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  categoryChip: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  categoryChipSelected: { backgroundColor: '#333', borderColor: '#333' },
-  categoryChipText: { color: '#333' },
-  categoryChipTextSelected: { color: '#fff' },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    categoryList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+    categoryChip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    categoryChipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+    categoryChipText: { color: colors.text },
+    categoryChipTextSelected: { color: colors.onPrimary },
+  });
+}

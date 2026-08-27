@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import {
   canDeleteCategory,
@@ -13,10 +13,15 @@ import {
 import type { Category, Expense } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
+import { useDarkMode } from '../src/theme/DarkModeContext';
+import { useAppColors, type AppColors } from '../src/theme/useAppColors';
 import { generateId } from '../src/utils/generateId';
 
 export default function SettingsScreen() {
   const repository = useRepository();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,8 +124,14 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>카테고리 관리</Text>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+      <Text style={styles.heading}>화면 설정</Text>
+      <View style={styles.row}>
+        <Text style={styles.rowText}>다크 모드</Text>
+        <Switch value={isDarkMode} onValueChange={() => toggleDarkMode()} />
+      </View>
+
+      <Text style={[styles.heading, styles.sectionHeading]}>카테고리 관리</Text>
 
       <Text style={styles.label}>새 카테고리</Text>
       <TextInput
@@ -131,6 +142,7 @@ export default function SettingsScreen() {
           clearFieldError('name');
         }}
         placeholder="예: 반려동물"
+        placeholderTextColor={colors.textMuted}
       />
       {errors.name ? <Text style={styles.error}>{errors.name}</Text> : null}
 
@@ -169,37 +181,41 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16, gap: 4 },
-  heading: { fontSize: 20, fontWeight: '600' },
-  sectionHeading: { marginTop: 24, marginBottom: 8 },
-  label: { fontSize: 14, fontWeight: '600', marginTop: 12 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 4,
-  },
-  error: { marginTop: 4, color: '#d33' },
-  submitButton: {
-    marginTop: 24,
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  submitButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  statusSuccess: { marginTop: 12, color: '#2a7d2a', textAlign: 'center' },
-  statusError: { marginTop: 12, color: '#d33', textAlign: 'center' },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  rowText: { fontSize: 16 },
-  deleteText: { color: '#d33' },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    screen: { backgroundColor: colors.background },
+    container: { padding: 16, gap: 4 },
+    heading: { fontSize: 20, fontWeight: '600', color: colors.text },
+    sectionHeading: { marginTop: 24, marginBottom: 8 },
+    label: { fontSize: 14, fontWeight: '600', marginTop: 12, color: colors.text },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 10,
+      marginTop: 4,
+      color: colors.text,
+    },
+    error: { marginTop: 4, color: colors.danger },
+    submitButton: {
+      marginTop: 24,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    submitButtonText: { color: colors.onPrimary, fontWeight: '600', fontSize: 16 },
+    statusSuccess: { marginTop: 12, color: colors.success, textAlign: 'center' },
+    statusError: { marginTop: 12, color: colors.danger, textAlign: 'center' },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    rowText: { fontSize: 16, color: colors.text },
+    deleteText: { color: colors.danger },
+  });
+}

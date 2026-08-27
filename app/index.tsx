@@ -10,12 +10,15 @@ import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
+import { useAppColors, type AppColors } from '../src/theme/useAppColors';
 import { todayAsDateString } from '../src/utils/today';
 
 const RECENT_EXPENSE_LIMIT = 20;
 
 export default function MainScreen() {
   const repository = useRepository();
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
@@ -114,7 +117,7 @@ export default function MainScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.heading}>지난 기간 대비 지출</Text>
       {isLoading ? null : loadError ? (
         <Text style={styles.error}>기간을 불러오지 못했습니다.</Text>
@@ -161,18 +164,21 @@ export default function MainScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16 },
-  heading: { fontSize: 20, fontWeight: '600', marginBottom: 12 },
-  sectionHeading: { marginTop: 24 },
-  empty: { color: '#888' },
-  error: { color: '#d33' },
-  comparisonBox: {
-    padding: 12,
-    backgroundColor: '#f7f7f7',
-    borderRadius: 8,
-    gap: 4,
-  },
-  comparisonPeriods: { fontSize: 12, color: '#888' },
-  comparisonAmount: { fontSize: 18, fontWeight: '600' },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    screen: { backgroundColor: colors.background },
+    container: { padding: 16 },
+    heading: { fontSize: 20, fontWeight: '600', marginBottom: 12, color: colors.text },
+    sectionHeading: { marginTop: 24 },
+    empty: { color: colors.textMuted },
+    error: { color: colors.danger },
+    comparisonBox: {
+      padding: 12,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      gap: 4,
+    },
+    comparisonPeriods: { fontSize: 12, color: colors.textMuted },
+    comparisonAmount: { fontSize: 18, fontWeight: '600', color: colors.text },
+  });
+}

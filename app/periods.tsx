@@ -15,6 +15,7 @@ import { getExpensesInPeriod, sumExpenseAmounts } from '../src/domain/periodExpe
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
+import { useAppColors, type AppColors } from '../src/theme/useAppColors';
 import { generateId } from '../src/utils/generateId';
 import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
@@ -30,6 +31,8 @@ interface PeriodDetail {
 
 export default function PeriodsScreen() {
   const repository = useRepository();
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [periods, setPeriods] = useState<Period[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -250,7 +253,7 @@ export default function PeriodsScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.heading}>새 기간 추가</Text>
 
       <Text style={styles.label}>시작일</Text>
@@ -263,6 +266,7 @@ export default function PeriodsScreen() {
           clearFieldError('startDate');
         }}
         placeholder="YYYY-MM-DD"
+        placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
       />
       {errors.startDate ? <Text style={styles.error}>{errors.startDate}</Text> : null}
@@ -276,6 +280,7 @@ export default function PeriodsScreen() {
           clearFieldError('endDate');
         }}
         placeholder="YYYY-MM-DD"
+        placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
       />
       {errors.endDate ? <Text style={styles.error}>{errors.endDate}</Text> : null}
@@ -343,6 +348,8 @@ function PeriodRow({
   onSaveExpense: (id: string, input: ExpenseInput) => Promise<ExpenseActionResult>;
   onDeleteExpense: (id: string) => Promise<ExpenseActionResult>;
 }) {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [incomeText, setIncomeText] = useState(String(period.income));
   const [saveState, setSaveState] = useState<IncomeSaveState>({ status: 'idle' });
   // Tracks whether the user has edited the field since it was last synced
@@ -402,6 +409,7 @@ function PeriodRow({
                 setSaveState({ status: 'idle' });
               }}
               placeholder="예: 3000000"
+              placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
             />
             <Pressable
@@ -448,56 +456,60 @@ function PeriodRow({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16, gap: 4 },
-  heading: { fontSize: 20, fontWeight: '600' },
-  sectionHeading: { marginTop: 24, marginBottom: 8 },
-  label: { fontSize: 14, fontWeight: '600', marginTop: 12 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 4,
-  },
-  error: { marginTop: 4, color: '#d33' },
-  empty: { color: '#888' },
-  submitButton: {
-    marginTop: 24,
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  submitButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  statusSuccess: { marginTop: 12, color: '#2a7d2a', textAlign: 'center' },
-  statusError: { marginTop: 12, color: '#d33', textAlign: 'center' },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  rowMain: { flexShrink: 1, flexGrow: 1 },
-  rowText: { fontSize: 16 },
-  deleteText: { color: '#d33' },
-  detail: {
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    backgroundColor: '#f7f7f7',
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  detailTotal: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
-  incomeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  incomeInput: { flex: 1, marginTop: 0 },
-  incomeSaveButton: {
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  incomeSaveButtonText: { color: '#fff', fontWeight: '600' },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    screen: { backgroundColor: colors.background },
+    container: { padding: 16, gap: 4 },
+    heading: { fontSize: 20, fontWeight: '600', color: colors.text },
+    sectionHeading: { marginTop: 24, marginBottom: 8 },
+    label: { fontSize: 14, fontWeight: '600', marginTop: 12, color: colors.text },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 10,
+      marginTop: 4,
+      color: colors.text,
+    },
+    error: { marginTop: 4, color: colors.danger },
+    empty: { color: colors.textMuted },
+    submitButton: {
+      marginTop: 24,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    submitButtonText: { color: colors.onPrimary, fontWeight: '600', fontSize: 16 },
+    statusSuccess: { marginTop: 12, color: colors.success, textAlign: 'center' },
+    statusError: { marginTop: 12, color: colors.danger, textAlign: 'center' },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    rowMain: { flexShrink: 1, flexGrow: 1 },
+    rowText: { fontSize: 16, color: colors.text },
+    deleteText: { color: colors.danger },
+    detail: {
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      marginBottom: 8,
+    },
+    detailTotal: { fontSize: 14, fontWeight: '600', marginBottom: 4, color: colors.text },
+    incomeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    incomeInput: { flex: 1, marginTop: 0 },
+    incomeSaveButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+    },
+    incomeSaveButtonText: { color: colors.onPrimary, fontWeight: '600' },
+  });
+}

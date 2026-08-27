@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { CategoryStat } from '../domain/categoryStats';
 import { formatCurrency } from '../domain/currency';
+import { useAppColors, type AppColors } from '../theme/useAppColors';
 import { computeSliceAngles, describeArcPath } from '../utils/pieSlices';
 
 const CHART_SIZE = 160;
@@ -36,12 +38,15 @@ function buildColorMap(stats: CategoryStat[]): Map<string, string> {
 }
 
 export function CategoryPieChart({ stats }: { stats: CategoryStat[] }) {
+  const themeColors = useAppColors();
+  const styles = useMemo(() => createStyles(themeColors), [themeColors]);
+
   if (stats.length === 0) {
     return null;
   }
 
   const angles = computeSliceAngles(stats.map((stat) => stat.percentage));
-  const colors = buildColorMap(stats);
+  const sliceColors = buildColorMap(stats);
 
   return (
     <View style={styles.container}>
@@ -50,14 +55,14 @@ export function CategoryPieChart({ stats }: { stats: CategoryStat[] }) {
           <Path
             key={keyFor(stat)}
             d={describeArcPath(RADIUS, RADIUS, angles[index].startAngle, angles[index].endAngle)}
-            fill={colors.get(keyFor(stat))}
+            fill={sliceColors.get(keyFor(stat))}
           />
         ))}
       </Svg>
       <View style={styles.legend}>
         {stats.map((stat) => (
           <View key={keyFor(stat)} style={styles.legendRow}>
-            <View style={[styles.legendSwatch, { backgroundColor: colors.get(keyFor(stat)) }]} />
+            <View style={[styles.legendSwatch, { backgroundColor: sliceColors.get(keyFor(stat)) }]} />
             <Text style={styles.legendLabel}>{stat.label}</Text>
             <Text style={styles.legendValue}>
               {formatCurrency(stat.amount)} ({stat.percentage.toFixed(1)}%)
@@ -69,11 +74,13 @@ export function CategoryPieChart({ stats }: { stats: CategoryStat[] }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { marginTop: 12, marginBottom: 4, alignItems: 'center', gap: 12 },
-  legend: { width: '100%', gap: 6 },
-  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  legendSwatch: { width: 12, height: 12, borderRadius: 6 },
-  legendLabel: { flex: 1, fontSize: 13 },
-  legendValue: { fontSize: 13, color: '#555' },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { marginTop: 12, marginBottom: 4, alignItems: 'center', gap: 12 },
+    legend: { width: '100%', gap: 6 },
+    legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    legendSwatch: { width: 12, height: 12, borderRadius: 6 },
+    legendLabel: { flex: 1, fontSize: 13, color: colors.text },
+    legendValue: { fontSize: 13, color: colors.textMuted },
+  });
+}

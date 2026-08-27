@@ -1,3 +1,4 @@
+import { DEFAULT_SETTINGS } from '../domain/settings';
 import type { LedgerRepository } from './types';
 
 /**
@@ -11,6 +12,20 @@ export function testsRepositoryContract(createRepository: () => LedgerRepository
     expect(await repository.getCategories()).toEqual([]);
     expect(await repository.getExpenses()).toEqual([]);
     expect(await repository.getPeriods()).toEqual([]);
+  });
+
+  test('starts out with default settings', async () => {
+    const repository = createRepository();
+
+    expect(await repository.getSettings()).toEqual(DEFAULT_SETTINGS);
+  });
+
+  test('settings written can be read back unchanged', async () => {
+    const repository = createRepository();
+
+    await repository.saveSettings({ darkMode: true });
+
+    expect(await repository.getSettings()).toEqual({ darkMode: true });
   });
 
   test('categories written can be read back unchanged', async () => {

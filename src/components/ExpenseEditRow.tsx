@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { resolveCategoryLabel } from '../domain/categoryLookup';
 import { formatCurrency } from '../domain/currency';
 import { validateExpenseInput, type ExpenseInput, type ExpenseInputField } from '../domain/expense';
 import type { Category, Expense } from '../domain/types';
+import { useAppColors, type AppColors } from '../theme/useAppColors';
 import { parseDigitAmount } from '../utils/parseDigitAmount';
 import { CategoryChipPicker } from './CategoryChipPicker';
 
@@ -37,6 +38,8 @@ export function ExpenseEditRow({
   onDelete: (id: string) => Promise<ExpenseActionResult>;
   variant?: 'standalone' | 'compact';
 }) {
+  const colors = useAppColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [date, setDate] = useState(expense.date);
   const [item, setItem] = useState(expense.item);
   const [amountText, setAmountText] = useState(String(expense.amount));
@@ -123,6 +126,7 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="YYYY-MM-DD"
+            placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
           />
           {errors.date ? <Text style={styles.fieldError}>{errors.date}</Text> : null}
@@ -136,6 +140,7 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="예: 점심"
+            placeholderTextColor={colors.textMuted}
           />
           {errors.item ? <Text style={styles.fieldError}>{errors.item}</Text> : null}
 
@@ -148,6 +153,7 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="예: 12000"
+            placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
           />
           {errors.amount ? <Text style={styles.fieldError}>{errors.amount}</Text> : null}
@@ -172,6 +178,7 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="메모"
+            placeholderTextColor={colors.textMuted}
             multiline
           />
 
@@ -200,56 +207,59 @@ export function ExpenseEditRow({
   );
 }
 
-const styles = StyleSheet.create({
-  rowStandalone: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  rowCompact: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  rowMain: { flexShrink: 1, flexGrow: 1 },
-  itemStandalone: { fontSize: 16 },
-  itemCompact: { fontSize: 14 },
-  meta: { fontSize: 12, color: '#888', marginTop: 2 },
-  amountStandalone: { fontSize: 16, fontWeight: '600' },
-  amountCompact: { fontSize: 14, fontWeight: '600' },
-  editForm: { paddingVertical: 12, gap: 4 },
-  label: { fontSize: 14, fontWeight: '600', marginTop: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 4,
-  },
-  memoInput: { minHeight: 60, textAlignVertical: 'top' },
-  fieldError: { marginTop: 4, color: '#d33' },
-  statusSuccess: { marginTop: 8, color: '#2a7d2a' },
-  actionRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
-  saveButton: {
-    flex: 1,
-    backgroundColor: '#333',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  deleteButton: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#d33',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  deleteButtonText: { color: '#d33', fontWeight: '600', fontSize: 16 },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    rowStandalone: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    rowCompact: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 6,
+    },
+    rowMain: { flexShrink: 1, flexGrow: 1 },
+    itemStandalone: { fontSize: 16, color: colors.text },
+    itemCompact: { fontSize: 14, color: colors.text },
+    meta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+    amountStandalone: { fontSize: 16, fontWeight: '600', color: colors.text },
+    amountCompact: { fontSize: 14, fontWeight: '600', color: colors.text },
+    editForm: { paddingVertical: 12, gap: 4 },
+    label: { fontSize: 14, fontWeight: '600', marginTop: 8, color: colors.text },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 10,
+      marginTop: 4,
+      color: colors.text,
+    },
+    memoInput: { minHeight: 60, textAlignVertical: 'top' },
+    fieldError: { marginTop: 4, color: colors.danger },
+    statusSuccess: { marginTop: 8, color: colors.success },
+    actionRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
+    saveButton: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    saveButtonText: { color: colors.onPrimary, fontWeight: '600', fontSize: 16 },
+    deleteButton: {
+      flex: 1,
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.danger,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    deleteButtonText: { color: colors.danger, fontWeight: '600', fontSize: 16 },
+  });
+}
