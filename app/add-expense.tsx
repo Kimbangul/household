@@ -1,7 +1,8 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
+import { CategoryChipPicker } from '../src/components/CategoryChipPicker';
 import { formatCurrency } from '../src/domain/currency';
 import { createExpense, validateExpenseInput, type ExpenseInputField } from '../src/domain/expense';
 import type { Category } from '../src/domain/types';
@@ -141,27 +142,14 @@ export default function AddExpenseScreen() {
       {categoriesError ? (
         <Text style={styles.error}>카테고리를 불러오지 못했습니다. 앱을 다시 시작해주세요.</Text>
       ) : (
-        <View style={styles.categoryList}>
-          {categories.map((category) => (
-            <Pressable
-              key={category.id}
-              onPress={() => {
-                setCategoryId(category.id);
-                clearFieldError('categoryId');
-              }}
-              style={[styles.categoryChip, categoryId === category.id && styles.categoryChipSelected]}
-            >
-              <Text
-                style={[
-                  styles.categoryChipText,
-                  categoryId === category.id && styles.categoryChipTextSelected,
-                ]}
-              >
-                {category.name}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <CategoryChipPicker
+          categories={categories}
+          selectedId={categoryId}
+          onSelect={(id) => {
+            setCategoryId(id);
+            clearFieldError('categoryId');
+          }}
+        />
       )}
       {errors.categoryId ? <Text style={styles.error}>{errors.categoryId}</Text> : null}
 
@@ -204,17 +192,6 @@ const styles = StyleSheet.create({
   memoInput: { minHeight: 60, textAlignVertical: 'top' },
   preview: { marginTop: 4, color: '#888' },
   error: { marginTop: 4, color: '#d33' },
-  categoryList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  categoryChip: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  categoryChipSelected: { backgroundColor: '#333', borderColor: '#333' },
-  categoryChipText: { color: '#333' },
-  categoryChipTextSelected: { color: '#fff' },
   submitButton: {
     marginTop: 24,
     backgroundColor: '#333',
