@@ -14,6 +14,22 @@ export const RowMain = styled.View`
   flex-grow: 1;
 `;
 
+// Matches the iBank kit's "Row / Transaction (Card)" usage: each entry is
+// its own individually-shadowed card, not one shared box around the whole
+// list — this is what makes each transaction read as boxed on a screen whose
+// own background is now a distinct (non-white) tint.
+export const RowCard = styled.View`
+  background-color: ${(props) => props.theme.card};
+  border-radius: 15px;
+  padding-horizontal: 12px;
+  margin-bottom: 10px;
+  shadow-color: ${(props) => props.theme.primary};
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.07;
+  shadow-radius: 16px;
+  elevation: 2;
+`;
+
 export const MetaText = styled.Text`
   font-size: 12px;
   line-height: 16px;

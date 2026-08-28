@@ -13,13 +13,14 @@ export const Screen = styled(ScrollView)`
 `;
 
 export const Heading = styled.Text`
-  font-size: 20px;
+  font-size: 16px;
   line-height: 28px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 export const SectionHeading = styled(Heading)`
+  font-size: 16px;
   margin-top: 28px;
   margin-bottom: 12px;
 `;
@@ -34,7 +35,7 @@ export const DateGroupHeading = styled.Text`
 `;
 
 export const FieldLabel = styled.Text`
-  font-size: 14px;
+  font-size: 12px;
   line-height: 20px;
   margin-top: 12px;
   color: ${(props) => props.theme.text};
@@ -45,10 +46,11 @@ export const FieldInput = styled(TextInput)`
   border-width: 1px;
   border-radius: 15px;
   padding: 12px;
-  margin-top: 6px;
+  margin-top: 4px;
   border-color: ${(props) => props.theme.border};
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontMedium};
+  font-size: 14px;
 `;
 
 export const MemoInput = styled(FieldInput)`

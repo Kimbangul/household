@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
 import { formatCurrency } from '../domain/currency';
@@ -18,6 +18,7 @@ import {
   DeleteButton,
   DeleteButtonText,
   EditForm,
+  RowCard,
   RowMain,
   RowStatusSuccessText as StatusSuccessText,
   SaveButton,
@@ -105,7 +106,7 @@ export function IncomeEntryEditRow({
   }
 
   return (
-    <View>
+    <RowCard>
       <SummaryRow onPress={onToggle}>
         <CategoryIconChip color={theme.primary} textColor={theme.onPrimary} initial="수" size="compact" />
         <RowMain>
@@ -181,7 +182,7 @@ export function IncomeEntryEditRow({
           </ActionRow>
         </EditForm>
       ) : null}
-    </View>
+    </RowCard>
   );
 }
 

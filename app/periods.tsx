@@ -486,17 +486,12 @@ const DeleteText = styled.Text`
   font-family: ${(props) => props.theme.fontRegular};
 `;
 
+// Plain spacing wrapper: the totals/headings sit directly on the screen
+// background, while the actual income/expense row lists box themselves via
+// ListCard — two nested cards here would just double up the shadow/radius.
 const DetailBox = styled.View`
-  padding-vertical: 12px;
-  padding-horizontal: 12px;
-  border-radius: 15px;
-  margin-bottom: 12px;
-  background-color: ${(props) => props.theme.card};
-  shadow-color: ${(props) => props.theme.primary};
-  shadow-offset: 0px 4px;
-  shadow-opacity: 0.07;
-  shadow-radius: 20px;
-  elevation: 2;
+  padding-vertical: 4px;
+  margin-bottom: 16px;
 `;
 
 const DetailTotalText = styled.Text`

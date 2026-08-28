@@ -197,7 +197,7 @@ const Row = styled(View)`
 `;
 
 const RowText = styled.Text`
-  font-size: 16px;
+  font-size: 12px;
   line-height: 24px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontMedium};

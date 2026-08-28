@@ -33,16 +33,21 @@ const CategoryList = styled.View`
   margin-top: 4px;
 `;
 
+// Matches the design system's "Tab / Active-Disable" chip: filled background,
+// no border. Inactive uses the dedicated chipSurface token (not
+// background/card) since this picker renders both directly on the screen and
+// nested inside a white RowCard — a plain background/card fill would
+// disappear into whichever one it happened to match.
 const CategoryChip = styled.Pressable<{ $selected: boolean }>`
-  border-width: 1px;
-  border-radius: 16px;
-  padding-vertical: 6px;
-  padding-horizontal: 12px;
-  border-color: ${(props) => (props.$selected ? props.theme.primary : props.theme.border)};
-  background-color: ${(props) => (props.$selected ? props.theme.primary : 'transparent')};
+  border-radius: 15px;
+  padding-vertical: 8px;
+  padding-horizontal: 14px;
+  background-color: ${(props) => (props.$selected ? props.theme.primary : props.theme.chipSurface)};
 `;
 
 const CategoryChipText = styled.Text<{ $selected: boolean }>`
+  font-size: 14px;
+  line-height: 20px;
   color: ${(props) => (props.$selected ? props.theme.onPrimary : props.theme.text)};
-  font-family: ${(props) => props.theme.fontRegular};
+  font-family: ${(props) => props.theme.fontMedium};
 `;

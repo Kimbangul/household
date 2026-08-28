@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
 import { resolveCategoryLabel } from '../domain/categoryLookup';
@@ -18,6 +18,7 @@ import {
   DeleteButtonText,
   EditForm,
   MetaText,
+  RowCard,
   RowMain,
   RowStatusSuccessText as StatusSuccessText,
   SaveButton,
@@ -118,7 +119,7 @@ export function ExpenseEditRow({
   const categoryLabel = resolveCategoryLabel(expense.categoryId, categoryNames);
 
   return (
-    <View>
+    <RowCard>
       <SummaryRow $compact={isCompact} onPress={onToggle}>
         <CategoryIconChip
           color={getCategoryChipColor(expense.categoryId)}
@@ -211,7 +212,7 @@ export function ExpenseEditRow({
           </ActionRow>
         </EditForm>
       ) : null}
-    </View>
+    </RowCard>
   );
 }
 
@@ -220,8 +221,6 @@ const SummaryRow = styled(Pressable)<{ $compact: boolean }>`
   justify-content: space-between;
   align-items: center;
   padding-vertical: ${(props) => (props.$compact ? '8px' : '14px')};
-  border-bottom-width: ${(props) => (props.$compact ? '0px' : '1px')};
-  border-bottom-color: ${(props) => props.theme.border};
 `;
 
 const ItemText = styled.Text<{ $compact: boolean }>`

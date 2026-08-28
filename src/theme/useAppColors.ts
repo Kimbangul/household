@@ -15,6 +15,7 @@ import { useTheme } from 'expo-router';
 export interface AppColors {
   background: string;
   card: string;
+  chipSurface: string;
   text: string;
   textMuted: string;
   border: string;
@@ -31,6 +32,27 @@ export interface AppColors {
 const FONT_REGULAR = 'NotoSansKR_400Regular';
 const FONT_MEDIUM = 'NotoSansKR_500Medium';
 const FONT_SEMIBOLD = 'NotoSansKR_600SemiBold';
+
+// React Navigation's default background/card (#F2F2F2 / #FFFFFF) are neutral
+// gray, not the kit's own indigo-tinted surfaces — the reference design's
+// "Payment history" screen keeps the whole screen (chrome included) on a
+// light lavender backdrop so the white per-row cards visibly pop, so these
+// override theme.colors.background/card rather than passing them through.
+const LIGHT_BACKGROUND = '#F2F1F9';
+const LIGHT_CARD = '#ffffff';
+const DARK_BACKGROUND = '#131024';
+const DARK_CARD = '#1e1b36';
+
+// A category chip (CategoryChipPicker) can sit directly on the screen
+// background OR nested inside a white RowCard, so it needs its own filled
+// surface distinct from both `background` and `card` — otherwise an inactive
+// chip disappears into whichever one it happens to be filled the same as.
+// This is the same light-lavender family as `background`, just a step more
+// saturated so it still reads against it (matches the kit's inactive
+// "Tab / Disable" fill, #F2F1F9, kept as a dedicated token instead of reusing
+// `background` for a different role).
+const LIGHT_CHIP_SURFACE = '#E4DEF7';
+const DARK_CHIP_SURFACE = '#2b2650';
 
 // Indigo/purple brand palette, adapted from a banking-app UI kit's visual
 // language (see commit message for the reference). Dark mode's primary is a
@@ -66,8 +88,9 @@ export function useAppColors(): AppColors {
   const extras = theme.dark ? DARK_EXTRAS : LIGHT_EXTRAS;
 
   return {
-    background: theme.colors.background as string,
-    card: theme.colors.card as string,
+    background: theme.dark ? DARK_BACKGROUND : LIGHT_BACKGROUND,
+    card: theme.dark ? DARK_CARD : LIGHT_CARD,
+    chipSurface: theme.dark ? DARK_CHIP_SURFACE : LIGHT_CHIP_SURFACE,
     text: theme.colors.text as string,
     border: theme.colors.border as string,
     ...extras,

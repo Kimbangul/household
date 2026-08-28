@@ -10,6 +10,9 @@ import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components/native';
 
+import { FlexTabButton } from '../src/components/FlexTabButton';
+import { TabBarIcon } from '../src/components/TabBarIcon';
+import { AddIcon, HomeIcon, PeriodsIcon, SettingsIcon } from '../src/components/icons/TabIcons';
 import { RepositoryProvider } from '../src/storage/RepositoryContext';
 import { DarkModeProvider, useDarkMode } from '../src/theme/DarkModeContext';
 import { useAppColors } from '../src/theme/useAppColors';
@@ -24,11 +27,78 @@ function StyledTabs({ isDarkMode }: { isDarkMode: boolean }) {
 
   return (
     <StyledThemeProvider theme={colors}>
-      <Tabs>
-        <Tabs.Screen name="index" options={{ title: '메인' }} />
-        <Tabs.Screen name="periods" options={{ title: '기간별 지출' }} />
-        <Tabs.Screen name="add-expense" options={{ title: '지출내역 추가' }} />
-        <Tabs.Screen name="settings" options={{ title: '설정' }} />
+      <Tabs
+        screenOptions={{
+          tabBarShowLabel: false,
+          tabBarButton: (props) => <FlexTabButton {...props} />,
+          tabBarStyle: {
+            backgroundColor: colors.background,
+            borderTopWidth: 0,
+            height: 64,
+            paddingTop: 8,
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: -5 },
+            shadowOpacity: 0.07,
+            shadowRadius: 20,
+            elevation: 8,
+          },
+          headerShadowVisible: false,
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTitleStyle: {
+            fontSize: 20,
+            lineHeight: 28,
+            color: colors.text,
+            fontFamily: colors.fontSemiBold,
+          },
+        }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: '메인',
+            tabBarIcon: ({ focused }) => (
+              <TabBarIcon focused={focused} label="메인">
+                <HomeIcon color={focused ? colors.onPrimary : colors.textMuted} />
+              </TabBarIcon>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="periods"
+          options={{
+            title: '기간별 지출',
+            tabBarIcon: ({ focused }) => (
+              <TabBarIcon focused={focused} label="기간별 지출">
+                <PeriodsIcon color={focused ? colors.onPrimary : colors.textMuted} />
+              </TabBarIcon>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="add-expense"
+          options={{
+            title: '지출내역 추가',
+            tabBarIcon: ({ focused }) => (
+              <TabBarIcon focused={focused} label="지출 추가">
+                <AddIcon color={focused ? colors.onPrimary : colors.textMuted} />
+              </TabBarIcon>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: '설정',
+            tabBarIcon: ({ focused }) => (
+              <TabBarIcon focused={focused} label="설정">
+                <SettingsIcon color={focused ? colors.onPrimary : colors.textMuted} />
+              </TabBarIcon>
+            ),
+          }}
+        />
       </Tabs>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
     </StyledThemeProvider>
