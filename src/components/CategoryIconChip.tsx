@@ -30,7 +30,12 @@ const ChipBox = styled.View<{ $size: 'compact' | 'standalone' }>`
   border-radius: 10px;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  margin-right: 14px;
+  shadow-color: #000000;
+  shadow-offset: 0px 5px;
+  shadow-opacity: 0.05;
+  shadow-radius: 12px;
+  elevation: 2;
 `;
 
 const ChipText = styled.Text<{ $size: 'compact' | 'standalone' }>`

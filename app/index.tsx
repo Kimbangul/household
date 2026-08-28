@@ -186,20 +186,28 @@ const ErrorText = styled.Text`
 `;
 
 const ComparisonBox = styled.View`
-  padding: 12px;
-  border-radius: 14px;
-  gap: 4px;
+  padding: 16px;
+  border-radius: 15px;
+  gap: 6px;
   background-color: ${(props) => props.theme.card};
+  shadow-color: ${(props) => props.theme.primary};
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.07;
+  shadow-radius: 20px;
+  elevation: 2;
 `;
 
 const ComparisonPeriodsText = styled.Text`
   font-size: 12px;
+  line-height: 16px;
   color: ${(props) => props.theme.textMuted};
   font-family: ${(props) => props.theme.fontRegular};
 `;
 
 const ComparisonAmountText = styled.Text`
   font-size: 18px;
+  line-height: 26px;
+  margin-top: 2px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;

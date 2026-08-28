@@ -192,17 +192,19 @@ const SummaryRow = styled(Pressable)`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-vertical: 6px;
+  padding-vertical: 8px;
 `;
 
 const ItemText = styled.Text`
   font-size: 14px;
+  line-height: 20px;
   color: ${(props) => props.theme.text};
-  font-family: ${(props) => props.theme.fontRegular};
+  font-family: ${(props) => props.theme.fontMedium};
 `;
 
 const AmountText = styled.Text`
   font-size: 14px;
+  line-height: 20px;
   color: ${(props) => props.theme.primary};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;

@@ -219,19 +219,21 @@ const SummaryRow = styled(Pressable)<{ $compact: boolean }>`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-vertical: ${(props) => (props.$compact ? '6px' : '10px')};
+  padding-vertical: ${(props) => (props.$compact ? '8px' : '14px')};
   border-bottom-width: ${(props) => (props.$compact ? '0px' : '1px')};
   border-bottom-color: ${(props) => props.theme.border};
 `;
 
 const ItemText = styled.Text<{ $compact: boolean }>`
   font-size: ${(props) => (props.$compact ? '14px' : '16px')};
+  line-height: ${(props) => (props.$compact ? '20px' : '24px')};
   color: ${(props) => props.theme.text};
-  font-family: ${(props) => props.theme.fontRegular};
+  font-family: ${(props) => props.theme.fontMedium};
 `;
 
 const AmountText = styled.Text<{ $compact: boolean }>`
   font-size: ${(props) => (props.$compact ? '14px' : '16px')};
+  line-height: ${(props) => (props.$compact ? '20px' : '24px')};
   color: ${(props) => props.theme.danger};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;

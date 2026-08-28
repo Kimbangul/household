@@ -1,4 +1,9 @@
-import { NotoSansKR_400Regular, NotoSansKR_600SemiBold, useFonts } from '@expo-google-fonts/noto-sans-kr';
+import {
+  NotoSansKR_400Regular,
+  NotoSansKR_500Medium,
+  NotoSansKR_600SemiBold,
+  useFonts,
+} from '@expo-google-fonts/noto-sans-kr';
 import { DarkTheme, DefaultTheme, Tabs, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -43,6 +48,7 @@ function ThemedTabs() {
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     NotoSansKR_400Regular,
+    NotoSansKR_500Medium,
     NotoSansKR_600SemiBold,
   });
 

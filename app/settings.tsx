@@ -198,8 +198,9 @@ const Row = styled(View)`
 
 const RowText = styled.Text`
   font-size: 16px;
+  line-height: 24px;
   color: ${(props) => props.theme.text};
-  font-family: ${(props) => props.theme.fontRegular};
+  font-family: ${(props) => props.theme.fontMedium};
 `;
 
 const DeleteText = styled.Text`

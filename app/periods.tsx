@@ -464,7 +464,7 @@ const PeriodHeaderRow = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-vertical: 10px;
+  padding-vertical: 12px;
   border-bottom-width: 1px;
   border-bottom-color: ${(props) => props.theme.border};
 `;
@@ -476,8 +476,9 @@ const PeriodTogglePressable = styled(Pressable)`
 
 const PeriodRangeText = styled.Text`
   font-size: 16px;
+  line-height: 24px;
   color: ${(props) => props.theme.text};
-  font-family: ${(props) => props.theme.fontRegular};
+  font-family: ${(props) => props.theme.fontMedium};
 `;
 
 const DeleteText = styled.Text`
@@ -486,24 +487,31 @@ const DeleteText = styled.Text`
 `;
 
 const DetailBox = styled.View`
-  padding-vertical: 8px;
-  padding-horizontal: 8px;
-  border-radius: 14px;
-  margin-bottom: 8px;
+  padding-vertical: 12px;
+  padding-horizontal: 12px;
+  border-radius: 15px;
+  margin-bottom: 12px;
   background-color: ${(props) => props.theme.card};
+  shadow-color: ${(props) => props.theme.primary};
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.07;
+  shadow-radius: 20px;
+  elevation: 2;
 `;
 
 const DetailTotalText = styled.Text`
   font-size: 14px;
-  margin-bottom: 4px;
+  line-height: 20px;
+  margin-bottom: 6px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 const SubsectionHeading = styled.Text`
   font-size: 14px;
-  margin-top: 12px;
-  margin-bottom: 4px;
+  line-height: 20px;
+  margin-top: 16px;
+  margin-bottom: 8px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;

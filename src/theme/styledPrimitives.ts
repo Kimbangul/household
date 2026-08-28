@@ -14,25 +14,28 @@ export const Screen = styled(ScrollView)`
 
 export const Heading = styled.Text`
   font-size: 20px;
+  line-height: 28px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 export const SectionHeading = styled(Heading)`
-  margin-top: 24px;
-  margin-bottom: 8px;
+  margin-top: 28px;
+  margin-bottom: 12px;
 `;
 
 export const DateGroupHeading = styled.Text`
   font-size: 12px;
-  margin-top: 12px;
-  margin-bottom: 4px;
+  line-height: 16px;
+  margin-top: 16px;
+  margin-bottom: 8px;
   color: ${(props) => props.theme.textMuted};
   font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 export const FieldLabel = styled.Text`
   font-size: 14px;
+  line-height: 20px;
   margin-top: 12px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};
@@ -40,12 +43,12 @@ export const FieldLabel = styled.Text`
 
 export const FieldInput = styled(TextInput)`
   border-width: 1px;
-  border-radius: 14px;
-  padding: 10px;
-  margin-top: 4px;
+  border-radius: 15px;
+  padding: 12px;
+  margin-top: 6px;
   border-color: ${(props) => props.theme.border};
   color: ${(props) => props.theme.text};
-  font-family: ${(props) => props.theme.fontRegular};
+  font-family: ${(props) => props.theme.fontMedium};
 `;
 
 export const MemoInput = styled(FieldInput)`
@@ -66,7 +69,7 @@ export const EmptyText = styled.Text`
 
 export const SubmitButton = styled(Pressable)`
   margin-top: 24px;
-  border-radius: 14px;
+  border-radius: 15px;
   padding-vertical: 14px;
   align-items: center;
   background-color: ${(props) => props.theme.primary};
@@ -75,7 +78,8 @@ export const SubmitButton = styled(Pressable)`
 export const SubmitButtonText = styled.Text`
   color: ${(props) => props.theme.onPrimary};
   font-size: 16px;
-  font-family: ${(props) => props.theme.fontSemiBold};
+  line-height: 24px;
+  font-family: ${(props) => props.theme.fontMedium};
 `;
 
 export const StatusSuccessText = styled.Text`

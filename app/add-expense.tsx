@@ -259,15 +259,15 @@ const ModeToggleRow = styled.View`
 
 const ModeToggleButton = styled(Pressable)<{ $active: boolean }>`
   flex: 1;
-  border-width: 1px;
-  border-radius: 14px;
+  border-radius: 15px;
   padding-vertical: 10px;
   align-items: center;
-  border-color: ${(props) => (props.$active ? props.theme.primary : props.theme.border)};
-  background-color: ${(props) => (props.$active ? props.theme.primary : 'transparent')};
+  background-color: ${(props) => (props.$active ? props.theme.primary : props.theme.card)};
 `;
 
 const ModeToggleText = styled.Text<{ $active: boolean }>`
+  font-size: 16px;
+  line-height: 24px;
   color: ${(props) => (props.$active ? props.theme.onPrimary : props.theme.text)};
-  font-family: ${(props) => props.theme.fontSemiBold};
+  font-family: ${(props) => props.theme.fontMedium};
 `;

@@ -23,11 +23,13 @@ export interface AppColors {
   danger: string;
   success: string;
   fontRegular: string;
+  fontMedium: string;
   fontSemiBold: string;
 }
 
 // Font family names must match the keys passed to useFonts() in app/_layout.tsx.
 const FONT_REGULAR = 'NotoSansKR_400Regular';
+const FONT_MEDIUM = 'NotoSansKR_500Medium';
 const FONT_SEMIBOLD = 'NotoSansKR_600SemiBold';
 
 // Indigo/purple brand palette, adapted from a banking-app UI kit's visual
@@ -44,6 +46,7 @@ const DARK_EXTRAS = {
   danger: '#ff6b85',
   success: '#6fe0c8',
   fontRegular: FONT_REGULAR,
+  fontMedium: FONT_MEDIUM,
   fontSemiBold: FONT_SEMIBOLD,
 };
 
@@ -54,6 +57,7 @@ const LIGHT_EXTRAS = {
   danger: '#ff4267',
   success: '#52d5ba',
   fontRegular: FONT_REGULAR,
+  fontMedium: FONT_MEDIUM,
   fontSemiBold: FONT_SEMIBOLD,
 };
 
