@@ -198,6 +198,7 @@ export default function SettingsScreen() {
               <CategoryIconChip
                 color={getCategoryChipColor(category.id)}
                 initial={getCategoryInitial(category.name)}
+                categoryId={category.id}
                 size="compact"
               />
               <RowText>{category.name}</RowText>

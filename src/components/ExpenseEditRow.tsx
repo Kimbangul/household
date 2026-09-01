@@ -132,6 +132,7 @@ export function ExpenseEditRow({
         <CategoryIconChip
           color={getCategoryChipColor(expense.categoryId)}
           initial={getCategoryInitial(categoryLabel)}
+          categoryId={expense.categoryId}
           size={isCompact ? 'compact' : 'standalone'}
         />
         <RowMain>
