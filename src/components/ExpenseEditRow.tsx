@@ -17,6 +17,7 @@ import {
   DeleteButton,
   DeleteButtonText,
   EditForm,
+  FlatRow,
   MetaText,
   RowCard,
   RowMain,
@@ -44,6 +45,7 @@ export function ExpenseEditRow({
   onSave,
   onDelete,
   variant = 'standalone',
+  isLast = false,
 }: {
   expense: Expense;
   categories: Category[];
@@ -52,7 +54,14 @@ export function ExpenseEditRow({
   onToggle: () => void;
   onSave: (id: string, input: ExpenseInput) => Promise<ExpenseActionResult>;
   onDelete: (id: string) => Promise<ExpenseActionResult>;
-  variant?: 'standalone' | 'compact';
+  // 'standalone': its own floating card (main screen's old look, still used
+  // where rows aren't already inside a ListCard). 'compact': smaller text,
+  // used nested in a period's detail. 'flat': standalone-sized text but no
+  // own card — a divider row inside a parent ListCard (`isLast` suppresses
+  // the divider on the last row), matching the reference design's
+  // undivided "최근 지출" list.
+  variant?: 'standalone' | 'compact' | 'flat';
+  isLast?: boolean;
 }) {
   const theme = useTheme();
   const [date, setDate] = useState(expense.date);
@@ -118,8 +127,8 @@ export function ExpenseEditRow({
   const isCompact = variant === 'compact';
   const categoryLabel = resolveCategoryLabel(expense.categoryId, categoryNames);
 
-  return (
-    <RowCard>
+  const content = (
+    <>
       <SummaryRow $compact={isCompact} onPress={onToggle}>
         <CategoryIconChip
           color={getCategoryChipColor(expense.categoryId)}
@@ -212,7 +221,13 @@ export function ExpenseEditRow({
           </ActionRow>
         </EditForm>
       ) : null}
-    </RowCard>
+    </>
+  );
+
+  return variant === 'flat' ? (
+    <FlatRow $isLast={isLast}>{content}</FlatRow>
+  ) : (
+    <RowCard>{content}</RowCard>
   );
 }
 

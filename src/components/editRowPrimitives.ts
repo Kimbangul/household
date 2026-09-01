@@ -27,6 +27,16 @@ export const RowCard = styled(Card)`
   margin-bottom: 10px;
 `;
 
+// The alternative to RowCard for a list that's already boxed by one
+// surrounding ListCard (e.g. the main screen's flat "최근 지출" list, which
+// isn't individually per-row cards in the reference design) — just
+// horizontal padding plus a divider under every row but the last.
+export const FlatRow = styled.View<{ $isLast: boolean }>`
+  padding-horizontal: 16px;
+  border-bottom-width: ${(props) => (props.$isLast ? '0px' : '1px')};
+  border-bottom-color: ${(props) => props.theme.border};
+`;
+
 export const MetaText = styled.Text`
   font-size: 12px;
   line-height: 16px;

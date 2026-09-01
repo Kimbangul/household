@@ -5,14 +5,13 @@ import styled from 'styled-components/native';
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
 import { formatCurrency } from '../src/domain/currency';
-import { groupByDate } from '../src/domain/dateGroups';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
 import { isPastPeriod } from '../src/domain/period';
 import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
-import { Card, DateGroupHeading, EmptyText, Heading, Screen } from '../src/theme/styledPrimitives';
+import { Card, EmptyText, Heading, ListCard, Screen } from '../src/theme/styledPrimitives';
 import { todayAsDateString } from '../src/utils/today';
 
 const RECENT_EXPENSE_LIMIT = 20;
@@ -118,26 +117,59 @@ export default function MainScreen() {
     }
   }
 
+  const difference = periodComparison?.difference ?? 0;
+
   return (
     <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
+      <HeaderBlock>
+        <HeaderTitle>가계부</HeaderTitle>
+        <HeaderSubtitle>지출을 기록하고 관리하세요</HeaderSubtitle>
+      </HeaderBlock>
+
       <MainHeading>최근 기간 대비 지출</MainHeading>
       {isLoading ? null : loadError ? (
         <ErrorText>기간을 불러오지 못했습니다.</ErrorText>
       ) : periodComparison ? (
         <ComparisonBox>
-          <ComparisonPeriodsText>
-            이전: {periodComparison.previous.startDate} ~ {periodComparison.previous.endDate}
-            {isPastPeriod(periodComparison.previous, today) ? '' : ' (진행 중)'}
-          </ComparisonPeriodsText>
-          <ComparisonPeriodsText>
-            최근: {periodComparison.latest.startDate} ~ {periodComparison.latest.endDate}
-            {isPastPeriod(periodComparison.latest, today) ? '' : ' (진행 중)'}
-          </ComparisonPeriodsText>
-          <ComparisonAmountText>
-            {periodComparison.difference === 0
-              ? '지출 변동이 없습니다.'
-              : `${formatCurrency(Math.abs(periodComparison.difference))} ${periodComparison.difference > 0 ? '증가' : '감소'}`}
-          </ComparisonAmountText>
+          <PeriodRow>
+            <PeriodRowLeft>
+              <PeriodRowTop>
+                <PeriodDateText>
+                  {periodComparison.latest.startDate} ~ {periodComparison.latest.endDate}
+                </PeriodDateText>
+                <PeriodStatusBadge period={periodComparison.latest} today={today} />
+              </PeriodRowTop>
+              <PeriodSubLabel>최근 기간</PeriodSubLabel>
+            </PeriodRowLeft>
+            <PeriodAmountText $tone="primary">{formatCurrency(periodComparison.latestTotal)}</PeriodAmountText>
+          </PeriodRow>
+
+          <PeriodRow $last>
+            <PeriodRowLeft>
+              <PeriodRowTop>
+                <PeriodDateText>
+                  {periodComparison.previous.startDate} ~ {periodComparison.previous.endDate}
+                </PeriodDateText>
+                <PeriodStatusBadge period={periodComparison.previous} today={today} />
+              </PeriodRowTop>
+              <PeriodSubLabel>이전 기간</PeriodSubLabel>
+            </PeriodRowLeft>
+            <PeriodAmountText $tone="muted">{formatCurrency(periodComparison.previousTotal)}</PeriodAmountText>
+          </PeriodRow>
+
+          <DiffBanner>
+            {difference > 0 ? (
+              <DiffText $tone="danger">
+                이전 대비 <DiffAmount>{formatCurrency(difference)}</DiffAmount> 더 지출했습니다
+              </DiffText>
+            ) : difference < 0 ? (
+              <DiffText $tone="success">
+                이전 대비 <DiffAmount>{formatCurrency(-difference)}</DiffAmount> 절약했습니다
+              </DiffText>
+            ) : (
+              <DiffText $tone="muted">이전과 동일한 지출입니다</DiffText>
+            )}
+          </DiffBanner>
         </ComparisonBox>
       ) : (
         <EmptyText>비교할 이전 기간이 없습니다.</EmptyText>
@@ -146,30 +178,67 @@ export default function MainScreen() {
       <SectionHeading>최근 지출</SectionHeading>
       {isLoading ? null : loadError ? (
         <ErrorText>지출내역을 불러오지 못했습니다.</ErrorText>
-      ) : recentExpenses.length === 0 ? (
-        <EmptyText>아직 등록된 지출내역이 없습니다.</EmptyText>
       ) : (
-        groupByDate(recentExpenses, today).flatMap((group) => [
-          <DateGroupHeading key={`heading-${group.date}`}>{group.label}</DateGroupHeading>,
-          ...group.items.map((expense) => (
-            <ExpenseEditRow
-              key={expense.id}
-              expense={expense}
-              categories={categories}
-              categoryNames={categoryNames}
-              isExpanded={expense.id === selectedExpenseId}
-              onToggle={() =>
-                setSelectedExpenseId((current) => (current === expense.id ? null : expense.id))
-              }
-              onSave={handleSaveExpense}
-              onDelete={handleDeleteExpense}
-            />
-          )),
-        ])
+        <ListCard>
+          {recentExpenses.length === 0 ? (
+            <EmptyRow>
+              <EmptyText>아직 등록된 지출내역이 없습니다.</EmptyText>
+            </EmptyRow>
+          ) : (
+            recentExpenses.map((expense, index) => (
+              <ExpenseEditRow
+                key={expense.id}
+                expense={expense}
+                categories={categories}
+                categoryNames={categoryNames}
+                isExpanded={expense.id === selectedExpenseId}
+                onToggle={() =>
+                  setSelectedExpenseId((current) => (current === expense.id ? null : expense.id))
+                }
+                onSave={handleSaveExpense}
+                onDelete={handleDeleteExpense}
+                variant="flat"
+                isLast={index === recentExpenses.length - 1}
+              />
+            ))
+          )}
+        </ListCard>
       )}
     </Screen>
   );
 }
+
+// Periods in this app are free-form and can overlap with unrelated durations
+// (docs/adr/0001) — so unlike the reference design's demo data, the
+// "previous" period here isn't guaranteed to have already ended. Showing
+// this on both rows (not just "최근 기간") keeps a still-accumulating
+// previous total from being read as final.
+function PeriodStatusBadge({ period, today }: { period: Period; today: string }) {
+  return isPastPeriod(period, today) ? (
+    <Badge $tone="ended">종료</Badge>
+  ) : (
+    <Badge $tone="ongoing">진행 중</Badge>
+  );
+}
+
+const HeaderBlock = styled.View`
+  margin-bottom: 8px;
+`;
+
+const HeaderTitle = styled.Text`
+  font-size: 28px;
+  line-height: 34px;
+  color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontExtraBold};
+`;
+
+const HeaderSubtitle = styled.Text`
+  font-size: 14px;
+  line-height: 20px;
+  margin-top: 2px;
+  color: ${(props) => props.theme.textMuted};
+  font-family: ${(props) => props.theme.fontRegular};
+`;
 
 const MainHeading = styled(Heading)`
   margin-bottom: 12px;
@@ -185,21 +254,93 @@ const ErrorText = styled.Text`
   font-family: ${(props) => props.theme.fontRegular};
 `;
 
+// Overrides Card's default padding: the period rows and diff banner below
+// each provide their own padding. No `overflow: hidden` here — Card's own
+// shadow is a style-object `boxShadow` bolted on outside the styled `css`
+// template (see the note atop styledPrimitives.tsx), and clipping the box
+// that carries it is an unnecessary risk; DiffBanner instead carries its own
+// bottom corner radius so its full-bleed background still looks contained.
 const ComparisonBox = styled(Card)`
-  gap: 6px;
+  padding: 0px;
 `;
 
-const ComparisonPeriodsText = styled.Text`
+const PeriodRow = styled.View<{ $last?: boolean }>`
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px;
+  border-bottom-width: ${(props) => (props.$last ? '0px' : '1px')};
+  border-bottom-color: ${(props) => props.theme.border};
+`;
+
+const PeriodRowLeft = styled.View`
+  flex-shrink: 1;
+`;
+
+const PeriodRowTop = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+`;
+
+const PeriodDateText = styled.Text`
   font-size: 12px;
   line-height: 16px;
+  color: ${(props) => props.theme.text};
+  font-family: ${(props) => props.theme.fontMedium};
+`;
+
+const PeriodSubLabel = styled.Text`
+  font-size: 11px;
+  line-height: 14px;
+  margin-top: 2px;
   color: ${(props) => props.theme.textMuted};
   font-family: ${(props) => props.theme.fontRegular};
 `;
 
-const ComparisonAmountText = styled.Text`
-  font-size: 18px;
-  line-height: 26px;
-  margin-top: 2px;
-  color: ${(props) => props.theme.text};
+const Badge = styled.Text<{ $tone: 'ongoing' | 'ended' }>`
+  font-size: 10px;
+  line-height: 14px;
+  padding-vertical: 2px;
+  padding-horizontal: 8px;
+  border-radius: 999px;
+  color: ${(props) => (props.$tone === 'ongoing' ? props.theme.onPrimary : props.theme.textMuted)};
+  background-color: ${(props) => (props.$tone === 'ongoing' ? props.theme.primary : props.theme.chipSurface)};
   font-family: ${(props) => props.theme.fontBold};
+`;
+
+const PeriodAmountText = styled.Text<{ $tone: 'primary' | 'muted' }>`
+  flex-shrink: 0;
+  font-size: ${(props) => (props.$tone === 'primary' ? '16px' : '14px')};
+  line-height: ${(props) => (props.$tone === 'primary' ? '22px' : '18px')};
+  color: ${(props) => (props.$tone === 'primary' ? props.theme.danger : props.theme.textMuted)};
+  font-family: ${(props) => props.theme.fontBold};
+`;
+
+const DiffBanner = styled.View`
+  padding-vertical: 12px;
+  padding-horizontal: 16px;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+  background-color: ${(props) => props.theme.chipSurface};
+`;
+
+const DiffText = styled.Text<{ $tone: 'danger' | 'success' | 'muted' }>`
+  text-align: center;
+  font-size: 12px;
+  line-height: 18px;
+  font-family: ${(props) => props.theme.fontMedium};
+  color: ${(props) =>
+    props.$tone === 'danger' ? props.theme.danger : props.$tone === 'success' ? props.theme.success : props.theme.textMuted};
+`;
+
+const DiffAmount = styled.Text`
+  font-family: ${(props) => props.theme.fontBold};
+`;
+
+const EmptyRow = styled.View`
+  padding-vertical: 48px;
+  align-items: center;
 `;

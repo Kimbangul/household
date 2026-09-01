@@ -22,13 +22,14 @@ import {
   FieldError,
   FieldInput,
   FieldLabel,
+  Heading,
+  ListCard,
   Screen,
   SectionHeading,
   StatusErrorText,
   StatusSuccessText,
   SubmitButton,
   SubmitButtonText,
-  Heading,
 } from '../src/theme/styledPrimitives';
 import { generateId } from '../src/utils/generateId';
 
@@ -142,7 +143,7 @@ export default function SettingsScreen() {
   return (
     <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
       <Heading>화면 설정</Heading>
-      <ListCard>
+      <SpacedListCard>
         <Row $last>
           <RowText>다크 모드</RowText>
           <Switch
@@ -152,7 +153,7 @@ export default function SettingsScreen() {
             thumbColor="#ffffff"
           />
         </Row>
-      </ListCard>
+      </SpacedListCard>
 
       <SectionHeading>카테고리 관리</SectionHeading>
 
@@ -206,8 +207,7 @@ export default function SettingsScreen() {
   );
 }
 
-const ListCard = styled(Card)`
-  padding: 0px;
+const SpacedListCard = styled(ListCard)`
   margin-bottom: 8px;
 `;
 

@@ -51,6 +51,13 @@ export function Card({ style, ...rest }: ViewProps) {
   return <CardBase style={[{ boxShadow: theme.cardShadow }, style]} {...rest} />;
 }
 
+// A Card with no internal padding, for wrapping a list of rows that provide
+// their own horizontal padding and divide themselves with a border-bottom
+// (e.g. FlatRow in editRowPrimitives.ts, or settings.tsx's category list).
+export const ListCard = styled(Card)`
+  padding: 0px;
+`;
+
 // Doubles as the first section label on every screen ("최근 기간 대비 지출",
 // "새 기간 추가", "화면 설정") — small uppercase tracked-out caps in the
 // soft-modern reference, not a large title (the screen's own big title is
