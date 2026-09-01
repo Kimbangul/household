@@ -6,12 +6,21 @@ import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/Expe
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
 import { formatCurrency } from '../src/domain/currency';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
-import { isPastPeriod } from '../src/domain/period';
+import { isOngoingPeriod, isPastPeriod } from '../src/domain/period';
 import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
-import { Card, EmptyText, Heading, ListCard, Screen } from '../src/theme/styledPrimitives';
+import {
+  Badge,
+  Card,
+  CARD_RADIUS,
+  dividerBottom,
+  EmptyText,
+  Heading,
+  ListCard,
+  Screen,
+} from '../src/theme/styledPrimitives';
 import { todayAsDateString } from '../src/utils/today';
 
 const RECENT_EXPENSE_LIMIT = 20;
@@ -131,7 +140,7 @@ export default function MainScreen() {
         <ErrorText>기간을 불러오지 못했습니다.</ErrorText>
       ) : periodComparison ? (
         <ComparisonBox>
-          <PeriodRow>
+          <PeriodRow $last={false}>
             <PeriodRowLeft>
               <PeriodRowTop>
                 <PeriodDateText>
@@ -141,10 +150,10 @@ export default function MainScreen() {
               </PeriodRowTop>
               <PeriodSubLabel>최근 기간</PeriodSubLabel>
             </PeriodRowLeft>
-            <PeriodAmountText $tone="primary">{formatCurrency(periodComparison.latestTotal)}</PeriodAmountText>
+            <PeriodAmountText $tone="danger">{formatCurrency(periodComparison.latestTotal)}</PeriodAmountText>
           </PeriodRow>
 
-          <PeriodRow $last>
+          <PeriodRow $last={true}>
             <PeriodRowLeft>
               <PeriodRowTop>
                 <PeriodDateText>
@@ -213,12 +222,20 @@ export default function MainScreen() {
 // "previous" period here isn't guaranteed to have already ended. Showing
 // this on both rows (not just "최근 기간") keeps a still-accumulating
 // previous total from being read as final.
+//
+// compareRecentPeriods already excludes not-yet-started periods from
+// eligibility, so `period`/`today` here are always either ongoing or past —
+// but this checks isOngoingPeriod explicitly (not just "not past") so a
+// future period never gets mislabeled "진행 중" if this is ever reused
+// somewhere that period list isn't pre-filtered.
 function PeriodStatusBadge({ period, today }: { period: Period; today: string }) {
-  return isPastPeriod(period, today) ? (
-    <Badge $tone="ended">종료</Badge>
-  ) : (
-    <Badge $tone="ongoing">진행 중</Badge>
-  );
+  if (isOngoingPeriod(period, today)) {
+    return <Badge $tone="primary">진행 중</Badge>;
+  }
+  if (isPastPeriod(period, today)) {
+    return <Badge $tone="muted">종료</Badge>;
+  }
+  return null;
 }
 
 const HeaderBlock = styled.View`
@@ -264,14 +281,13 @@ const ComparisonBox = styled(Card)`
   padding: 0px;
 `;
 
-const PeriodRow = styled.View<{ $last?: boolean }>`
+const PeriodRow = styled.View<{ $last: boolean }>`
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   padding: 16px;
-  border-bottom-width: ${(props) => (props.$last ? '0px' : '1px')};
-  border-bottom-color: ${(props) => props.theme.border};
+  ${dividerBottom}
 `;
 
 const PeriodRowLeft = styled.View`
@@ -300,30 +316,22 @@ const PeriodSubLabel = styled.Text`
   font-family: ${(props) => props.theme.fontRegular};
 `;
 
-const Badge = styled.Text<{ $tone: 'ongoing' | 'ended' }>`
-  font-size: 10px;
-  line-height: 14px;
-  padding-vertical: 2px;
-  padding-horizontal: 8px;
-  border-radius: 999px;
-  color: ${(props) => (props.$tone === 'ongoing' ? props.theme.onPrimary : props.theme.textMuted)};
-  background-color: ${(props) => (props.$tone === 'ongoing' ? props.theme.primary : props.theme.chipSurface)};
-  font-family: ${(props) => props.theme.fontBold};
-`;
-
-const PeriodAmountText = styled.Text<{ $tone: 'primary' | 'muted' }>`
+// Both rows show an expense total (never income), so the emphasized tone is
+// always theme.danger — named 'danger'/'muted' rather than 'primary'/'muted'
+// so the prop reads as what it actually renders.
+const PeriodAmountText = styled.Text<{ $tone: 'danger' | 'muted' }>`
   flex-shrink: 0;
-  font-size: ${(props) => (props.$tone === 'primary' ? '16px' : '14px')};
-  line-height: ${(props) => (props.$tone === 'primary' ? '22px' : '18px')};
-  color: ${(props) => (props.$tone === 'primary' ? props.theme.danger : props.theme.textMuted)};
+  font-size: ${(props) => (props.$tone === 'danger' ? '16px' : '14px')};
+  line-height: ${(props) => (props.$tone === 'danger' ? '22px' : '18px')};
+  color: ${(props) => (props.$tone === 'danger' ? props.theme.danger : props.theme.textMuted)};
   font-family: ${(props) => props.theme.fontBold};
 `;
 
 const DiffBanner = styled.View`
   padding-vertical: 12px;
   padding-horizontal: 16px;
-  border-bottom-left-radius: 18px;
-  border-bottom-right-radius: 18px;
+  border-bottom-left-radius: ${CARD_RADIUS}px;
+  border-bottom-right-radius: ${CARD_RADIUS}px;
   background-color: ${(props) => props.theme.chipSurface};
 `;
 

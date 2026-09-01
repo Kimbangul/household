@@ -1,7 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable } from 'react-native';
-import styled, { useTheme } from 'styled-components/native';
+import styled from 'styled-components/native';
 
 import { CategoryPieChart } from '../src/components/CategoryPieChart';
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
@@ -13,13 +13,20 @@ import { groupByDate } from '../src/domain/dateGroups';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
 import { createIncomeEntry, type IncomeEntryInput } from '../src/domain/incomeEntry';
 import { calculateNetSavings } from '../src/domain/netSavings';
-import { createPeriod, isPastPeriod, suggestNextPeriodStartDate, validatePeriodInput } from '../src/domain/period';
+import {
+  createPeriod,
+  isOngoingPeriod,
+  isPastPeriod,
+  suggestNextPeriodStartDate,
+  validatePeriodInput,
+} from '../src/domain/period';
 import type { PeriodInputField } from '../src/domain/period';
 import { getRecordsInPeriod, sumAmounts } from '../src/domain/periodRecords';
 import type { Category, Expense, IncomeEntry, Period } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import {
+  Badge,
   Card,
   DateGroupHeading,
   EmptyText,
@@ -50,7 +57,6 @@ interface PeriodDetail {
 
 export default function PeriodsScreen() {
   const repository = useRepository();
-  const theme = useTheme();
 
   const [periods, setPeriods] = useState<Period[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -316,7 +322,6 @@ export default function PeriodsScreen() {
             clearFieldError('startDate');
           }}
           placeholder="YYYY-MM-DD"
-          placeholderTextColor={theme.textMuted}
           autoCapitalize="none"
         />
         {errors.startDate ? <FieldError>{errors.startDate}</FieldError> : null}
@@ -329,7 +334,6 @@ export default function PeriodsScreen() {
             clearFieldError('endDate');
           }}
           placeholder="YYYY-MM-DD"
-          placeholderTextColor={theme.textMuted}
           autoCapitalize="none"
         />
         {errors.endDate ? <FieldError>{errors.endDate}</FieldError> : null}
@@ -395,14 +399,18 @@ function PeriodRow({
 }) {
   const netSavings = detail ? calculateNetSavings(detail.incomeTotal, detail.expenseTotal) : 0;
   const today = todayAsDateString();
+  const isOngoing = isOngoingPeriod(period, today);
 
   return (
     <PeriodCard>
       <PeriodHeaderRow>
         <PeriodTogglePressable onPress={onToggle}>
-          <PeriodRangeText>
-            {period.startDate} ~ {period.endDate}
-          </PeriodRangeText>
+          <PeriodHeaderTop>
+            <PeriodRangeText>
+              {period.startDate} ~ {period.endDate}
+            </PeriodRangeText>
+            {isOngoing ? <Badge $tone="primary">진행 중</Badge> : null}
+          </PeriodHeaderTop>
         </PeriodTogglePressable>
         <Pressable onPress={onDelete}>
           <DeleteText>삭제</DeleteText>
@@ -485,6 +493,13 @@ const PeriodHeaderRow = styled.View`
 const PeriodTogglePressable = styled(Pressable)`
   flex-shrink: 1;
   flex-grow: 1;
+`;
+
+const PeriodHeaderTop = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 `;
 
 const PeriodRangeText = styled.Text`

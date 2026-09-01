@@ -124,7 +124,6 @@ export function IncomeEntryEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="YYYY-MM-DD"
-            placeholderTextColor={theme.textMuted}
             autoCapitalize="none"
           />
           {errors.date ? <FieldError>{errors.date}</FieldError> : null}
@@ -137,7 +136,6 @@ export function IncomeEntryEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="예: 8월 급여"
-            placeholderTextColor={theme.textMuted}
           />
           {errors.item ? <FieldError>{errors.item}</FieldError> : null}
 
@@ -149,7 +147,6 @@ export function IncomeEntryEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="예: 3000000"
-            placeholderTextColor={theme.textMuted}
             keyboardType="numeric"
           />
           {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
@@ -162,7 +159,6 @@ export function IncomeEntryEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="메모"
-            placeholderTextColor={theme.textMuted}
           />
 
           {actionState.status === 'error' ? <FieldError>{actionState.message}</FieldError> : null}

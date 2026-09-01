@@ -9,9 +9,15 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import styled, { useTheme } from 'styled-components/native';
+import styled, { css, useTheme } from 'styled-components/native';
 
 import { withAlpha } from './withAlpha';
+
+// Card's own corner radius, exported so a full-bleed child that must match
+// Card's rounded silhouette (Card intentionally has no `overflow: hidden` —
+// see the note on ComparisonBox in app/index.tsx) can derive its own corner
+// radius from this instead of a second hardcoded 18.
+export const CARD_RADIUS = 18;
 
 // Shared across every screen/form: only components whose CSS is byte-for-byte
 // identical in at least two files live here. A component that looks similar
@@ -33,7 +39,7 @@ export const Screen = styled(ScrollView)`
 
 const CardBase = styled.View`
   background-color: ${(props) => props.theme.card};
-  border-radius: 18px;
+  border-radius: ${CARD_RADIUS}px;
   border-width: 1px;
   border-color: ${(props) => props.theme.border};
   padding: 16px;
@@ -58,12 +64,24 @@ export const ListCard = styled(Card)`
   padding: 0px;
 `;
 
+// The "divider under every row but the last" convention shared by every
+// row-list in the app (FlatRow in editRowPrimitives.ts, PeriodRow in
+// app/index.tsx, Row in app/settings.tsx) — those three components differ
+// enough in their own layout (padding, flex alignment) to stay local per the
+// byte-for-byte-identical rule above, but this specific border logic is
+// identical across all of them, so only it is shared. Mix into any
+// `styled.View<{ $last: boolean }>` (or a type extending it) with `${dividerBottom}`.
+export const dividerBottom = css<{ $last: boolean }>`
+  border-bottom-width: ${(props) => (props.$last ? '0px' : '1px')};
+  border-bottom-color: ${(props) => props.theme.border};
+`;
+
 // Doubles as the first section label on every screen ("최근 기간 대비 지출",
 // "새 기간 추가", "화면 설정") — small uppercase tracked-out caps in the
 // soft-modern reference, not a large title (the screen's own big title is
 // the native nav header above it, already styled via headerTitleStyle).
 export const Heading = styled.Text`
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -114,7 +132,7 @@ const StyledFieldInput = styled(TextInput)`
 `;
 
 export const FieldInput = forwardRef<TextInput, TextInputProps>(function FieldInput(
-  { onFocus, onBlur, style, ...rest },
+  { onFocus, onBlur, style, placeholderTextColor, ...rest },
   ref,
 ) {
   const [focused, setFocused] = useState(false);
@@ -123,6 +141,10 @@ export const FieldInput = forwardRef<TextInput, TextInputProps>(function FieldIn
     <StyledFieldInput
       ref={ref}
       style={[{ boxShadow: focused ? theme.insetShadowFocus : theme.insetShadow }, style]}
+      // Faded to 50% of the regular muted-text color so a placeholder never
+      // reads as loud as real input text or a field label — callers don't
+      // need to pass this themselves.
+      placeholderTextColor={placeholderTextColor ?? withAlpha(theme.textMuted, 0.5)}
       onFocus={(event) => {
         setFocused(true);
         onFocus?.(event);
@@ -152,6 +174,21 @@ export const EmptyText = styled.Text`
   font-family: ${(props) => props.theme.fontRegular};
 `;
 
+// A small rounded status pill (e.g. "진행 중" on an ongoing period, "기본" on
+// a built-in category) — 'primary' is the filled/emphasized tone, 'muted'
+// the quiet/neutral one. Each screen owns its own copy/condition for when to
+// show it, since that logic differs per screen; only the visual atom is shared.
+export const Badge = styled.Text<{ $tone: 'primary' | 'muted' }>`
+  font-size: 10px;
+  line-height: 14px;
+  padding-vertical: 2px;
+  padding-horizontal: 8px;
+  border-radius: 999px;
+  color: ${(props) => (props.$tone === 'primary' ? props.theme.onPrimary : props.theme.textMuted)};
+  background-color: ${(props) => (props.$tone === 'primary' ? props.theme.primary : props.theme.chipSurface)};
+  font-family: ${(props) => props.theme.fontBold};
+`;
+
 const SubmitButtonBase = styled(Pressable)`
   margin-top: 24px;
   border-radius: 14px;
@@ -178,14 +215,16 @@ export function SubmitButton({
 
 export const SubmitButtonText = styled.Text`
   color: ${(props) => props.theme.onPrimary};
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 14px;
+  line-height: 20px;
   font-family: ${(props) => props.theme.fontBold};
 `;
 
 export const StatusSuccessText = styled.Text`
   margin-top: 12px;
   text-align: center;
+  font-size: 12px;
+  line-height: 16px;
   color: ${(props) => props.theme.success};
   font-family: ${(props) => props.theme.fontRegular};
 `;
@@ -193,6 +232,8 @@ export const StatusSuccessText = styled.Text`
 export const StatusErrorText = styled.Text`
   margin-top: 12px;
   text-align: center;
+  font-size: 12px;
+  line-height: 16px;
   color: ${(props) => props.theme.danger};
   font-family: ${(props) => props.theme.fontRegular};
 `;

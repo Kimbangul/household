@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable } from 'react-native';
-import styled, { useTheme } from 'styled-components/native';
+import styled from 'styled-components/native';
 
 import { resolveCategoryLabel } from '../domain/categoryLookup';
 import { formatCurrency } from '../domain/currency';
@@ -63,7 +63,6 @@ export function ExpenseEditRow({
   variant?: 'standalone' | 'compact' | 'flat';
   isLast?: boolean;
 }) {
-  const theme = useTheme();
   const [date, setDate] = useState(expense.date);
   const [item, setItem] = useState(expense.item);
   const [amountText, setAmountText] = useState(String(expense.amount));
@@ -151,7 +150,6 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="YYYY-MM-DD"
-            placeholderTextColor={theme.textMuted}
             autoCapitalize="none"
           />
           {errors.date ? <FieldError>{errors.date}</FieldError> : null}
@@ -164,7 +162,6 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="예: 점심"
-            placeholderTextColor={theme.textMuted}
           />
           {errors.item ? <FieldError>{errors.item}</FieldError> : null}
 
@@ -176,7 +173,6 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="예: 12000"
-            placeholderTextColor={theme.textMuted}
             keyboardType="numeric"
           />
           {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
@@ -200,7 +196,6 @@ export function ExpenseEditRow({
               setActionState({ status: 'idle' });
             }}
             placeholder="메모"
-            placeholderTextColor={theme.textMuted}
             multiline
           />
 
@@ -225,7 +220,7 @@ export function ExpenseEditRow({
   );
 
   return variant === 'flat' ? (
-    <FlatRow $isLast={isLast}>{content}</FlatRow>
+    <FlatRow $last={isLast}>{content}</FlatRow>
   ) : (
     <RowCard>{content}</RowCard>
   );

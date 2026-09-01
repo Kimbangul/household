@@ -18,7 +18,10 @@ import { useRepository } from '../src/storage/RepositoryContext';
 import { getCategoryChipColor, getCategoryInitial } from '../src/theme/categoryChip';
 import { useDarkMode } from '../src/theme/DarkModeContext';
 import {
+  Badge,
   Card,
+  CARD_RADIUS,
+  dividerBottom,
   FieldError,
   FieldInput,
   FieldLabel,
@@ -166,7 +169,6 @@ export default function SettingsScreen() {
             clearFieldError('name');
           }}
           placeholder="예: 반려동물"
-          placeholderTextColor={theme.textMuted}
         />
         {errors.name ? <FieldError>{errors.name}</FieldError> : null}
 
@@ -186,6 +188,9 @@ export default function SettingsScreen() {
         <FieldError>카테고리를 불러오지 못했습니다.</FieldError>
       ) : (
         <ListCard>
+          <CountHeader>
+            <CountHeaderText>전체 카테고리 ({categories.length})</CountHeaderText>
+          </CountHeader>
           {categories.map((category, index) => (
             <Row key={category.id} $last={index === categories.length - 1}>
               <CategoryIconChip
@@ -198,7 +203,9 @@ export default function SettingsScreen() {
                 <Pressable onPress={() => handleDeleteCategory(category)}>
                   <DeleteText>삭제</DeleteText>
                 </Pressable>
-              ) : null}
+              ) : (
+                <Badge $tone="muted">기본</Badge>
+              )}
             </Row>
           ))}
         </ListCard>
@@ -211,18 +218,37 @@ const SpacedListCard = styled(ListCard)`
   margin-bottom: 8px;
 `;
 
+// Sits flush against ListCard's own rounded top corners (ListCard has no
+// `overflow: hidden` — see the note on ComparisonBox in app/index.tsx — so
+// this carries its own matching top radius instead).
+const CountHeader = styled.View`
+  padding-vertical: 12px;
+  padding-horizontal: 16px;
+  border-top-left-radius: ${CARD_RADIUS}px;
+  border-top-right-radius: ${CARD_RADIUS}px;
+  border-bottom-width: 1px;
+  border-bottom-color: ${(props) => props.theme.border};
+  background-color: ${(props) => props.theme.chipSurface};
+`;
+
+const CountHeaderText = styled.Text`
+  font-size: 12px;
+  line-height: 16px;
+  color: ${(props) => props.theme.textMuted};
+  font-family: ${(props) => props.theme.fontBold};
+`;
+
 const Row = styled.View<{ $last: boolean }>`
   flex-direction: row;
   align-items: center;
   padding-vertical: 12px;
   padding-horizontal: 16px;
-  border-bottom-width: ${(props) => (props.$last ? '0px' : '1px')};
-  border-bottom-color: ${(props) => props.theme.border};
+  ${dividerBottom}
 `;
 
 const RowText = styled.Text`
   flex: 1;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};

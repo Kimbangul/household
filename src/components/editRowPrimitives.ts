@@ -1,7 +1,7 @@
 import { Pressable } from 'react-native';
 import styled from 'styled-components/native';
 
-import { Card, FieldLabel } from '../theme/styledPrimitives';
+import { Card, dividerBottom, FieldLabel } from '../theme/styledPrimitives';
 
 // Shared between ExpenseEditRow and IncomeEntryEditRow: the parts of their
 // inline expand-to-edit UI that are byte-for-byte identical. Each row's
@@ -31,10 +31,9 @@ export const RowCard = styled(Card)`
 // surrounding ListCard (e.g. the main screen's flat "최근 지출" list, which
 // isn't individually per-row cards in the reference design) — just
 // horizontal padding plus a divider under every row but the last.
-export const FlatRow = styled.View<{ $isLast: boolean }>`
+export const FlatRow = styled.View<{ $last: boolean }>`
   padding-horizontal: 16px;
-  border-bottom-width: ${(props) => (props.$isLast ? '0px' : '1px')};
-  border-bottom-color: ${(props) => props.theme.border};
+  ${dividerBottom}
 `;
 
 export const MetaText = styled.Text`

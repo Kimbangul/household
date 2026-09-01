@@ -1,4 +1,11 @@
-import { createPeriod, isFuturePeriod, isPastPeriod, suggestNextPeriodStartDate, validatePeriodInput } from './period';
+import {
+  createPeriod,
+  isFuturePeriod,
+  isOngoingPeriod,
+  isPastPeriod,
+  suggestNextPeriodStartDate,
+  validatePeriodInput,
+} from './period';
 import type { Period } from './types';
 
 const validInput = { startDate: '2026-08-01', endDate: '2026-08-31' };
@@ -98,5 +105,32 @@ describe('isFuturePeriod', () => {
   test('is not future when the start date is in the past', () => {
     const period: Period = { id: 'p1', startDate: '2026-08-01', endDate: '2026-09-10' };
     expect(isFuturePeriod(period, '2026-08-24')).toBe(false);
+  });
+});
+
+describe('isOngoingPeriod', () => {
+  test('is ongoing when today falls between start and end', () => {
+    const period: Period = { id: 'p1', startDate: '2026-08-01', endDate: '2026-08-31' };
+    expect(isOngoingPeriod(period, '2026-08-24')).toBe(true);
+  });
+
+  test('is ongoing when today is exactly the start date', () => {
+    const period: Period = { id: 'p1', startDate: '2026-08-24', endDate: '2026-08-31' };
+    expect(isOngoingPeriod(period, '2026-08-24')).toBe(true);
+  });
+
+  test('is ongoing when today is exactly the end date', () => {
+    const period: Period = { id: 'p1', startDate: '2026-08-01', endDate: '2026-08-24' };
+    expect(isOngoingPeriod(period, '2026-08-24')).toBe(true);
+  });
+
+  test('is not ongoing when the period has not started yet', () => {
+    const period: Period = { id: 'p1', startDate: '2026-08-25', endDate: '2026-09-10' };
+    expect(isOngoingPeriod(period, '2026-08-24')).toBe(false);
+  });
+
+  test('is not ongoing when the period has already ended', () => {
+    const period: Period = { id: 'p1', startDate: '2026-08-01', endDate: '2026-08-10' };
+    expect(isOngoingPeriod(period, '2026-08-24')).toBe(false);
   });
 });

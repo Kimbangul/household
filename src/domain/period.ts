@@ -58,3 +58,8 @@ export function isPastPeriod(period: Period, today: string): boolean {
 export function isFuturePeriod(period: Period, today: string): boolean {
   return period.startDate > today;
 }
+
+// "진행 중인 기간" (CONTEXT.md): started but not yet ended.
+export function isOngoingPeriod(period: Period, today: string): boolean {
+  return !isFuturePeriod(period, today) && !isPastPeriod(period, today);
+}

@@ -33,7 +33,6 @@ type EntryMode = 'expense' | 'income';
 
 export default function AddExpenseScreen() {
   const repository = useRepository();
-  const theme = useTheme();
 
   const [mode, setMode] = useState<EntryMode>('expense');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -169,7 +168,6 @@ export default function AddExpenseScreen() {
             clearFieldError('date');
           }}
           placeholder="YYYY-MM-DD"
-          placeholderTextColor={theme.textMuted}
           autoCapitalize="none"
         />
         {errors.date ? <FieldError>{errors.date}</FieldError> : null}
@@ -182,7 +180,6 @@ export default function AddExpenseScreen() {
             clearFieldError('item');
           }}
           placeholder={mode === 'expense' ? '예: 점심' : '예: 8월 급여'}
-          placeholderTextColor={theme.textMuted}
         />
         {errors.item ? <FieldError>{errors.item}</FieldError> : null}
 
@@ -194,7 +191,6 @@ export default function AddExpenseScreen() {
             clearFieldError('amount');
           }}
           placeholder={mode === 'expense' ? '예: 12000' : '예: 3000000'}
-          placeholderTextColor={theme.textMuted}
           keyboardType="numeric"
         />
         {amountText.length > 0 && Number.isFinite(amount) && amount > 0 ? (
@@ -229,7 +225,6 @@ export default function AddExpenseScreen() {
             setSubmitStatus(null);
           }}
           placeholder="메모"
-          placeholderTextColor={theme.textMuted}
           multiline
         />
 
