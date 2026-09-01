@@ -4,7 +4,7 @@ import { useTheme } from 'expo-router';
 // background, card, text, border, notification). This adds the handful of
 // semantic colors (muted text, danger, success, button-on-primary) every
 // screen in this app already used as hardcoded hex values, picked per mode
-// so they still read clearly against each theme's background, plus the two
+// so they still read clearly against each theme's background, plus the five
 // loaded font family names used everywhere text is rendered.
 //
 // Every color field is a plain string, not RN's ColorValue: ColorValue's
@@ -26,12 +26,16 @@ export interface AppColors {
   fontRegular: string;
   fontMedium: string;
   fontSemiBold: string;
+  fontBold: string;
+  fontExtraBold: string;
 }
 
 // Font family names must match the keys passed to useFonts() in app/_layout.tsx.
-const FONT_REGULAR = 'NotoSansKR_400Regular';
-const FONT_MEDIUM = 'NotoSansKR_500Medium';
-const FONT_SEMIBOLD = 'NotoSansKR_600SemiBold';
+const FONT_REGULAR = 'Pretendard-Regular';
+const FONT_MEDIUM = 'Pretendard-Medium';
+const FONT_SEMIBOLD = 'Pretendard-SemiBold';
+const FONT_BOLD = 'Pretendard-Bold';
+const FONT_EXTRABOLD = 'Pretendard-ExtraBold';
 
 // React Navigation's default background/card (#F2F2F2 / #FFFFFF) are neutral
 // gray, not the kit's own indigo-tinted surfaces — the reference design's
@@ -70,6 +74,8 @@ const DARK_EXTRAS = {
   fontRegular: FONT_REGULAR,
   fontMedium: FONT_MEDIUM,
   fontSemiBold: FONT_SEMIBOLD,
+  fontBold: FONT_BOLD,
+  fontExtraBold: FONT_EXTRABOLD,
 };
 
 const LIGHT_EXTRAS = {
@@ -81,6 +87,8 @@ const LIGHT_EXTRAS = {
   fontRegular: FONT_REGULAR,
   fontMedium: FONT_MEDIUM,
   fontSemiBold: FONT_SEMIBOLD,
+  fontBold: FONT_BOLD,
+  fontExtraBold: FONT_EXTRABOLD,
 };
 
 export function useAppColors(): AppColors {

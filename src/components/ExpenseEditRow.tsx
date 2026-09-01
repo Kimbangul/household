@@ -234,5 +234,5 @@ const AmountText = styled.Text<{ $compact: boolean }>`
   font-size: ${(props) => (props.$compact ? '14px' : '16px')};
   line-height: ${(props) => (props.$compact ? '20px' : '24px')};
   color: ${(props) => props.theme.danger};
-  font-family: ${(props) => props.theme.fontSemiBold};
+  font-family: ${(props) => props.theme.fontBold};
 `;

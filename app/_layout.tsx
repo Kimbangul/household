@@ -1,9 +1,4 @@
-import {
-  NotoSansKR_400Regular,
-  NotoSansKR_500Medium,
-  NotoSansKR_600SemiBold,
-  useFonts,
-} from '@expo-google-fonts/noto-sans-kr';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Tabs, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -51,7 +46,7 @@ function StyledTabs({ isDarkMode }: { isDarkMode: boolean }) {
             fontSize: 20,
             lineHeight: 28,
             color: colors.text,
-            fontFamily: colors.fontSemiBold,
+            fontFamily: colors.fontExtraBold,
           },
         }}
       >
@@ -117,9 +112,11 @@ function ThemedTabs() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    NotoSansKR_400Regular,
-    NotoSansKR_500Medium,
-    NotoSansKR_600SemiBold,
+    'Pretendard-Regular': require('../src/assets/font/Pretendard-Regular.ttf'),
+    'Pretendard-Medium': require('../src/assets/font/Pretendard-Medium.ttf'),
+    'Pretendard-SemiBold': require('../src/assets/font/Pretendard-SemiBold.ttf'),
+    'Pretendard-Bold': require('../src/assets/font/Pretendard-Bold.ttf'),
+    'Pretendard-ExtraBold': require('../src/assets/font/Pretendard-ExtraBold.ttf'),
   });
 
   useEffect(() => {

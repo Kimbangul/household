@@ -209,5 +209,5 @@ const ComparisonAmountText = styled.Text`
   line-height: 26px;
   margin-top: 2px;
   color: ${(props) => props.theme.text};
-  font-family: ${(props) => props.theme.fontSemiBold};
+  font-family: ${(props) => props.theme.fontBold};
 `;

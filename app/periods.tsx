@@ -409,7 +409,7 @@ function PeriodRow({
         <DetailBox>
           <DetailTotalText>수입 합계 {formatCurrency(detail.incomeTotal)}</DetailTotalText>
           <DetailTotalText>지출 합계 {formatCurrency(detail.expenseTotal)}</DetailTotalText>
-          <DetailTotalText>순저축 {formatCurrency(netSavings)}</DetailTotalText>
+          <NetSavingsText>순저축 {formatCurrency(netSavings)}</NetSavingsText>
 
           <SubsectionHeading>수입내역</SubsectionHeading>
           {detail.incomeEntries.length === 0 ? (
@@ -500,6 +500,10 @@ const DetailTotalText = styled.Text`
   margin-bottom: 6px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};
+`;
+
+const NetSavingsText = styled(DetailTotalText)`
+  font-family: ${(props) => props.theme.fontBold};
 `;
 
 const SubsectionHeading = styled.Text`

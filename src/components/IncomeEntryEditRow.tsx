@@ -207,5 +207,5 @@ const AmountText = styled.Text`
   font-size: 14px;
   line-height: 20px;
   color: ${(props) => props.theme.primary};
-  font-family: ${(props) => props.theme.fontSemiBold};
+  font-family: ${(props) => props.theme.fontBold};
 `;
