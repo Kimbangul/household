@@ -1,10 +1,11 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable } from 'react-native';
-import styled from 'styled-components/native';
+import styled, { useTheme } from 'styled-components/native';
 
 import { CategoryPieChart } from '../src/components/CategoryPieChart';
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
+import { TrashIcon } from '../src/components/icons/ActionIcons';
 import { IncomeEntryEditRow, type IncomeEntryActionResult } from '../src/components/IncomeEntryEditRow';
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
 import { aggregateExpensesByCategory, type CategoryStat } from '../src/domain/categoryStats';
@@ -29,6 +30,7 @@ import {
   Badge,
   Card,
   DateGroupHeading,
+  DeleteIconButton,
   EmptyText,
   FieldError,
   FieldInput,
@@ -397,6 +399,7 @@ function PeriodRow({
   onSaveIncomeEntry: (id: string, input: IncomeEntryInput) => Promise<IncomeEntryActionResult>;
   onDeleteIncomeEntry: (id: string) => Promise<IncomeEntryActionResult>;
 }) {
+  const theme = useTheme();
   const netSavings = detail ? calculateNetSavings(detail.incomeTotal, detail.expenseTotal) : 0;
   const today = todayAsDateString();
   const isOngoing = isOngoingPeriod(period, today);
@@ -412,9 +415,9 @@ function PeriodRow({
             {isOngoing ? <Badge $tone="primary">진행 중</Badge> : null}
           </PeriodHeaderTop>
         </PeriodTogglePressable>
-        <Pressable onPress={onDelete}>
-          <DeleteText>삭제</DeleteText>
-        </Pressable>
+        <DeleteIconButton onPress={onDelete} accessibilityLabel="기간 삭제">
+          <TrashIcon color={theme.danger} />
+        </DeleteIconButton>
       </PeriodHeaderRow>
       {detail ? (
         <DetailBox>
@@ -507,11 +510,6 @@ const PeriodRangeText = styled.Text`
   line-height: 24px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontMedium};
-`;
-
-const DeleteText = styled.Text`
-  color: ${(props) => props.theme.danger};
-  font-family: ${(props) => props.theme.fontRegular};
 `;
 
 // Sits inside PeriodCard (which already provides the card's own

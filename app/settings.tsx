@@ -1,9 +1,10 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Switch } from 'react-native';
+import { Switch } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
 import { CategoryIconChip } from '../src/components/CategoryIconChip';
+import { CloseIcon } from '../src/components/icons/ActionIcons';
 import {
   canDeleteCategory,
   createCategory,
@@ -21,6 +22,7 @@ import {
   Badge,
   Card,
   CARD_RADIUS,
+  DeleteIconButton,
   dividerBottom,
   FieldError,
   FieldInput,
@@ -200,9 +202,12 @@ export default function SettingsScreen() {
               />
               <RowText>{category.name}</RowText>
               {canDeleteCategory(category) ? (
-                <Pressable onPress={() => handleDeleteCategory(category)}>
-                  <DeleteText>삭제</DeleteText>
-                </Pressable>
+                <DeleteIconButton
+                  onPress={() => handleDeleteCategory(category)}
+                  accessibilityLabel={`${category.name} 카테고리 삭제`}
+                >
+                  <CloseIcon color={theme.danger} />
+                </DeleteIconButton>
               ) : (
                 <Badge $tone="muted">기본</Badge>
               )}
@@ -252,9 +257,4 @@ const RowText = styled.Text`
   line-height: 20px;
   color: ${(props) => props.theme.text};
   font-family: ${(props) => props.theme.fontSemiBold};
-`;
-
-const DeleteText = styled.Text`
-  color: ${(props) => props.theme.danger};
-  font-family: ${(props) => props.theme.fontRegular};
 `;

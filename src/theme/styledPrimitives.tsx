@@ -4,6 +4,7 @@ import {
   ScrollView,
   TextInput,
   type PressableProps,
+  type PressableStateCallbackType,
   type StyleProp,
   type TextInputProps,
   type ViewProps,
@@ -173,6 +174,49 @@ export const EmptyText = styled.Text`
   color: ${(props) => props.theme.textMuted};
   font-family: ${(props) => props.theme.fontRegular};
 `;
+
+const DeleteIconButtonBase = styled(Pressable)`
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+`;
+
+// 32×32 rounded-12 icon-only button for a destructive row action (period
+// delete, category delete) — replaces a plain "삭제" text link with the
+// reference design's icon-button pattern. Icon color is the caller's job
+// (usually `theme.danger`, via `<TrashIcon color={theme.danger} />` etc. as
+// children); this only owns the tap target size/shape and a light
+// danger-tinted background while pressed (RN has no `:hover`, so this
+// substitutes for the reference's `hover:bg-expense/10`).
+//
+// `accessibilityLabel` is required (not just allowed): the old text-link
+// version got its screen-reader label for free from the nested "삭제" Text
+// node, but a bare icon has no text for RN to derive one from, so every
+// caller must say what this specific button deletes ("기간 삭제",
+// "{name} 카테고리 삭제", etc.) rather than announcing only "button".
+// `hitSlop` defaults to 6px/side (32px visual → ~44px tappable, the
+// Apple HIG/Material minimum touch target) without growing the icon itself;
+// pass a different `hitSlop` to override.
+export function DeleteIconButton({
+  style,
+  hitSlop = 6,
+  ...rest
+}: Omit<PressableProps, 'accessibilityLabel'> & { accessibilityLabel: string }) {
+  const theme = useTheme();
+  return (
+    <DeleteIconButtonBase
+      accessibilityRole="button"
+      hitSlop={hitSlop}
+      style={(state: PressableStateCallbackType) => [
+        state.pressed ? { backgroundColor: withAlpha(theme.danger, 0.12) } : null,
+        typeof style === 'function' ? style(state) : style,
+      ]}
+      {...rest}
+    />
+  );
+}
 
 // A small rounded status pill (e.g. "진행 중" on an ongoing period, "기본" on
 // a built-in category) — 'primary' is the filled/emphasized tone, 'muted'
