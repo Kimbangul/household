@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components/native';
 
-import { FlexTabButton } from '../src/components/FlexTabButton';
 import { TabBarIcon } from '../src/components/TabBarIcon';
 import { AddIcon, HomeIcon, PeriodsIcon, SettingsIcon } from '../src/components/icons/TabIcons';
 import { RepositoryProvider } from '../src/storage/RepositoryContext';
@@ -25,17 +24,13 @@ function StyledTabs({ isDarkMode }: { isDarkMode: boolean }) {
       <Tabs
         screenOptions={{
           tabBarShowLabel: false,
-          tabBarButton: (props) => <FlexTabButton {...props} />,
           tabBarStyle: {
-            backgroundColor: colors.background,
-            borderTopWidth: 0,
-            height: 64,
-            paddingTop: 8,
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: -5 },
-            shadowOpacity: 0.07,
-            shadowRadius: 20,
-            elevation: 8,
+            backgroundColor: colors.card,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            height: 68,
+            paddingTop: 6,
+            boxShadow: '0px -8px 20px -6px rgba(34, 24, 63, 0.08)',
           },
           headerShadowVisible: false,
           headerTitleAlign: 'center',
@@ -56,7 +51,7 @@ function StyledTabs({ isDarkMode }: { isDarkMode: boolean }) {
             title: '메인',
             tabBarIcon: ({ focused }) => (
               <TabBarIcon focused={focused} label="메인">
-                <HomeIcon color={focused ? colors.onPrimary : colors.textMuted} />
+                <HomeIcon color={focused ? colors.primary : colors.textMuted} />
               </TabBarIcon>
             ),
           }}
@@ -67,7 +62,7 @@ function StyledTabs({ isDarkMode }: { isDarkMode: boolean }) {
             title: '기간별 지출',
             tabBarIcon: ({ focused }) => (
               <TabBarIcon focused={focused} label="기간별 지출">
-                <PeriodsIcon color={focused ? colors.onPrimary : colors.textMuted} />
+                <PeriodsIcon color={focused ? colors.primary : colors.textMuted} />
               </TabBarIcon>
             ),
           }}
@@ -78,7 +73,7 @@ function StyledTabs({ isDarkMode }: { isDarkMode: boolean }) {
             title: '지출내역 추가',
             tabBarIcon: ({ focused }) => (
               <TabBarIcon focused={focused} label="지출 추가">
-                <AddIcon color={focused ? colors.onPrimary : colors.textMuted} />
+                <AddIcon color={focused ? colors.primary : colors.textMuted} />
               </TabBarIcon>
             ),
           }}
@@ -89,7 +84,7 @@ function StyledTabs({ isDarkMode }: { isDarkMode: boolean }) {
             title: '설정',
             tabBarIcon: ({ focused }) => (
               <TabBarIcon focused={focused} label="설정">
-                <SettingsIcon color={focused ? colors.onPrimary : colors.textMuted} />
+                <SettingsIcon color={focused ? colors.primary : colors.textMuted} />
               </TabBarIcon>
             ),
           }}

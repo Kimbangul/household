@@ -1,8 +1,9 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Switch, View } from 'react-native';
+import { Pressable, Switch } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
+import { CategoryIconChip } from '../src/components/CategoryIconChip';
 import {
   canDeleteCategory,
   createCategory,
@@ -14,8 +15,10 @@ import {
 import type { Category, Expense } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
+import { getCategoryChipColor, getCategoryInitial } from '../src/theme/categoryChip';
 import { useDarkMode } from '../src/theme/DarkModeContext';
 import {
+  Card,
   FieldError,
   FieldInput,
   FieldLabel,
@@ -139,68 +142,90 @@ export default function SettingsScreen() {
   return (
     <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
       <Heading>화면 설정</Heading>
-      <Row>
-        <RowText>다크 모드</RowText>
-        <Switch value={isDarkMode} onValueChange={() => toggleDarkMode()} />
-      </Row>
+      <ListCard>
+        <Row $last>
+          <RowText>다크 모드</RowText>
+          <Switch
+            value={isDarkMode}
+            onValueChange={() => toggleDarkMode()}
+            trackColor={{ true: theme.primary, false: theme.chipSurface }}
+            thumbColor="#ffffff"
+          />
+        </Row>
+      </ListCard>
 
       <SectionHeading>카테고리 관리</SectionHeading>
 
-      <FieldLabel>새 카테고리</FieldLabel>
-      <FieldInput
-        value={name}
-        onChangeText={(value) => {
-          setName(value);
-          clearFieldError('name');
-        }}
-        placeholder="예: 반려동물"
-        placeholderTextColor={theme.textMuted}
-      />
-      {errors.name ? <FieldError>{errors.name}</FieldError> : null}
+      <Card>
+        <FieldLabel>새 카테고리</FieldLabel>
+        <FieldInput
+          value={name}
+          onChangeText={(value) => {
+            setName(value);
+            clearFieldError('name');
+          }}
+          placeholder="예: 반려동물"
+          placeholderTextColor={theme.textMuted}
+        />
+        {errors.name ? <FieldError>{errors.name}</FieldError> : null}
 
-      <SubmitButton onPress={handleAddCategory} disabled={isSaving || isLoading || loadError}>
-        <SubmitButtonText>{isSaving ? '추가 중...' : '카테고리 추가'}</SubmitButtonText>
-      </SubmitButton>
+        <SubmitButton onPress={handleAddCategory} disabled={isSaving || isLoading || loadError}>
+          <SubmitButtonText>{isSaving ? '추가 중...' : '카테고리 추가'}</SubmitButtonText>
+        </SubmitButton>
 
-      {submitStatus === 'success' ? <StatusSuccessText>카테고리가 추가되었습니다.</StatusSuccessText> : null}
-      {submitStatus === 'error' ? (
-        <StatusErrorText>처리하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
-      ) : null}
+        {submitStatus === 'success' ? <StatusSuccessText>카테고리가 추가되었습니다.</StatusSuccessText> : null}
+        {submitStatus === 'error' ? (
+          <StatusErrorText>처리하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
+        ) : null}
+      </Card>
 
       <SectionHeading>전체 카테고리</SectionHeading>
       {deleteError ? <FieldError>삭제하지 못했습니다. 다시 시도해주세요.</FieldError> : null}
       {isLoading ? null : loadError ? (
         <FieldError>카테고리를 불러오지 못했습니다.</FieldError>
       ) : (
-        categories.map((category) => (
-          <Row key={category.id}>
-            <RowText>{category.name}</RowText>
-            {canDeleteCategory(category) ? (
-              <Pressable onPress={() => handleDeleteCategory(category)}>
-                <DeleteText>삭제</DeleteText>
-              </Pressable>
-            ) : null}
-          </Row>
-        ))
+        <ListCard>
+          {categories.map((category, index) => (
+            <Row key={category.id} $last={index === categories.length - 1}>
+              <CategoryIconChip
+                color={getCategoryChipColor(category.id)}
+                initial={getCategoryInitial(category.name)}
+                size="compact"
+              />
+              <RowText>{category.name}</RowText>
+              {canDeleteCategory(category) ? (
+                <Pressable onPress={() => handleDeleteCategory(category)}>
+                  <DeleteText>삭제</DeleteText>
+                </Pressable>
+              ) : null}
+            </Row>
+          ))}
+        </ListCard>
       )}
     </Screen>
   );
 }
 
-const Row = styled(View)`
+const ListCard = styled(Card)`
+  padding: 0px;
+  margin-bottom: 8px;
+`;
+
+const Row = styled.View<{ $last: boolean }>`
   flex-direction: row;
-  justify-content: space-between;
   align-items: center;
-  padding-vertical: 10px;
-  border-bottom-width: 1px;
+  padding-vertical: 12px;
+  padding-horizontal: 16px;
+  border-bottom-width: ${(props) => (props.$last ? '0px' : '1px')};
   border-bottom-color: ${(props) => props.theme.border};
 `;
 
 const RowText = styled.Text`
-  font-size: 12px;
-  line-height: 24px;
+  flex: 1;
+  font-size: 13px;
+  line-height: 20px;
   color: ${(props) => props.theme.text};
-  font-family: ${(props) => props.theme.fontMedium};
+  font-family: ${(props) => props.theme.fontSemiBold};
 `;
 
 const DeleteText = styled.Text`

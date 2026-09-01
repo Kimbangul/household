@@ -108,7 +108,7 @@ export function IncomeEntryEditRow({
   return (
     <RowCard>
       <SummaryRow onPress={onToggle}>
-        <CategoryIconChip color={theme.primary} textColor={theme.onPrimary} initial="수" size="compact" />
+        <CategoryIconChip color={theme.primary} initial="수" size="compact" />
         <RowMain>
           <ItemText>{entry.item}</ItemText>
         </RowMain>

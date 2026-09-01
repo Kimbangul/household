@@ -12,7 +12,7 @@ import { compareRecentPeriods } from '../src/domain/periodComparison';
 import { getRecentExpenses } from '../src/domain/recentExpenses';
 import type { Category, Expense, Period } from '../src/domain/types';
 import { useRepository } from '../src/storage/RepositoryContext';
-import { DateGroupHeading, EmptyText, Heading, Screen } from '../src/theme/styledPrimitives';
+import { Card, DateGroupHeading, EmptyText, Heading, Screen } from '../src/theme/styledPrimitives';
 import { todayAsDateString } from '../src/utils/today';
 
 const RECENT_EXPENSE_LIMIT = 20;
@@ -185,16 +185,8 @@ const ErrorText = styled.Text`
   font-family: ${(props) => props.theme.fontRegular};
 `;
 
-const ComparisonBox = styled.View`
-  padding: 16px;
-  border-radius: 15px;
+const ComparisonBox = styled(Card)`
   gap: 6px;
-  background-color: ${(props) => props.theme.card};
-  shadow-color: ${(props) => props.theme.primary};
-  shadow-offset: 0px 4px;
-  shadow-opacity: 0.07;
-  shadow-radius: 20px;
-  elevation: 2;
 `;
 
 const ComparisonPeriodsText = styled.Text`

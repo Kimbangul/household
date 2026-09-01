@@ -1,7 +1,7 @@
 import { Pressable } from 'react-native';
 import styled from 'styled-components/native';
 
-import { FieldLabel } from '../theme/styledPrimitives';
+import { Card, FieldLabel } from '../theme/styledPrimitives';
 
 // Shared between ExpenseEditRow and IncomeEntryEditRow: the parts of their
 // inline expand-to-edit UI that are byte-for-byte identical. Each row's
@@ -14,20 +14,17 @@ export const RowMain = styled.View`
   flex-grow: 1;
 `;
 
-// Matches the iBank kit's "Row / Transaction (Card)" usage: each entry is
-// its own individually-shadowed card, not one shared box around the whole
-// list — this is what makes each transaction read as boxed on a screen whose
-// own background is now a distinct (non-white) tint.
-export const RowCard = styled.View`
-  background-color: ${(props) => props.theme.card};
-  border-radius: 15px;
-  padding-horizontal: 12px;
+// Each entry is its own individually-shadowed floating card, not one shared
+// box around the whole list — this is what makes each transaction read as
+// boxed on a screen whose own background is a distinct (non-white) tint.
+// SummaryRow/EditForm (defined per-file) already provide their own vertical
+// padding, so this trims Card's default to horizontal-only.
+export const RowCard = styled(Card)`
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 12px;
+  padding-right: 12px;
   margin-bottom: 10px;
-  shadow-color: ${(props) => props.theme.primary};
-  shadow-offset: 0px 4px;
-  shadow-opacity: 0.07;
-  shadow-radius: 16px;
-  elevation: 2;
 `;
 
 export const MetaText = styled.Text`
@@ -63,7 +60,7 @@ export const ActionRow = styled.View`
 
 export const SaveButton = styled(Pressable)`
   flex: 1;
-  border-radius: 15px;
+  border-radius: 14px;
   padding-vertical: 14px;
   align-items: center;
   background-color: ${(props) => props.theme.primary};
@@ -73,22 +70,22 @@ export const SaveButtonText = styled.Text`
   font-size: 16px;
   line-height: 24px;
   color: ${(props) => props.theme.onPrimary};
-  font-family: ${(props) => props.theme.fontMedium};
+  font-family: ${(props) => props.theme.fontBold};
 `;
 
-// Matches the design system's "Button / Ghost" style: no border, white/card
-// background, colored label text only.
+// Outlined ghost button: no fill, danger-colored border and label only.
 export const DeleteButton = styled(Pressable)`
   flex: 1;
-  border-radius: 15px;
+  border-radius: 14px;
+  border-width: 1px;
+  border-color: ${(props) => props.theme.danger};
   padding-vertical: 14px;
   align-items: center;
-  background-color: ${(props) => props.theme.card};
 `;
 
 export const DeleteButtonText = styled.Text`
   font-size: 16px;
   line-height: 24px;
   color: ${(props) => props.theme.danger};
-  font-family: ${(props) => props.theme.fontMedium};
+  font-family: ${(props) => props.theme.fontBold};
 `;

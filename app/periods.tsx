@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 
 import { CategoryPieChart } from '../src/components/CategoryPieChart';
@@ -20,6 +20,7 @@ import type { Category, Expense, IncomeEntry, Period } from '../src/domain/types
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import {
+  Card,
   DateGroupHeading,
   EmptyText,
   FieldError,
@@ -305,41 +306,43 @@ export default function PeriodsScreen() {
     <Screen contentContainerStyle={CONTENT_CONTAINER_STYLE}>
       <Heading>새 기간 추가</Heading>
 
-      <FieldLabel>시작일</FieldLabel>
-      <FieldInput
-        value={startDate}
-        onChangeText={(value) => {
-          setStartDate(value);
-          startDateTouchedRef.current = true;
-          clearFieldError('startDate');
-        }}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor={theme.textMuted}
-        autoCapitalize="none"
-      />
-      {errors.startDate ? <FieldError>{errors.startDate}</FieldError> : null}
+      <FormCard>
+        <FieldLabel>시작일</FieldLabel>
+        <FieldInput
+          value={startDate}
+          onChangeText={(value) => {
+            setStartDate(value);
+            startDateTouchedRef.current = true;
+            clearFieldError('startDate');
+          }}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor={theme.textMuted}
+          autoCapitalize="none"
+        />
+        {errors.startDate ? <FieldError>{errors.startDate}</FieldError> : null}
 
-      <FieldLabel>종료일</FieldLabel>
-      <FieldInput
-        value={endDate}
-        onChangeText={(value) => {
-          setEndDate(value);
-          clearFieldError('endDate');
-        }}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor={theme.textMuted}
-        autoCapitalize="none"
-      />
-      {errors.endDate ? <FieldError>{errors.endDate}</FieldError> : null}
+        <FieldLabel>종료일</FieldLabel>
+        <FieldInput
+          value={endDate}
+          onChangeText={(value) => {
+            setEndDate(value);
+            clearFieldError('endDate');
+          }}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor={theme.textMuted}
+          autoCapitalize="none"
+        />
+        {errors.endDate ? <FieldError>{errors.endDate}</FieldError> : null}
 
-      <SubmitButton onPress={handleAddPeriod} disabled={isSaving || isLoading || loadError}>
-        <SubmitButtonText>{isSaving ? '추가 중...' : '기간 추가'}</SubmitButtonText>
-      </SubmitButton>
+        <SubmitButton onPress={handleAddPeriod} disabled={isSaving || isLoading || loadError}>
+          <SubmitButtonText>{isSaving ? '추가 중...' : '기간 추가'}</SubmitButtonText>
+        </SubmitButton>
 
-      {submitStatus === 'success' ? <StatusSuccessText>기간이 추가되었습니다.</StatusSuccessText> : null}
-      {submitStatus === 'error' ? (
-        <StatusErrorText>처리하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
-      ) : null}
+        {submitStatus === 'success' ? <StatusSuccessText>기간이 추가되었습니다.</StatusSuccessText> : null}
+        {submitStatus === 'error' ? (
+          <StatusErrorText>처리하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
+        ) : null}
+      </FormCard>
 
       <SectionHeading>현재/예정 기간</SectionHeading>
       {deleteError ? <FieldError>삭제하지 못했습니다. 다시 시도해주세요.</FieldError> : null}
@@ -394,7 +397,7 @@ function PeriodRow({
   const today = todayAsDateString();
 
   return (
-    <View>
+    <PeriodCard>
       <PeriodHeaderRow>
         <PeriodTogglePressable onPress={onToggle}>
           <PeriodRangeText>
@@ -456,17 +459,27 @@ function PeriodRow({
           )}
         </DetailBox>
       ) : null}
-    </View>
+    </PeriodCard>
   );
 }
+
+const PeriodCard = styled(Card)`
+  padding-top: 0px;
+  padding-bottom: 0px;
+  margin-bottom: 12px;
+`;
+
+// Wraps the "새 기간 추가" form fields in the same floating-card treatment as
+// every other card in the app.
+const FormCard = styled(Card)`
+  margin-bottom: 8px;
+`;
 
 const PeriodHeaderRow = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-vertical: 12px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${(props) => props.theme.border};
+  padding-vertical: 14px;
 `;
 
 const PeriodTogglePressable = styled(Pressable)`
@@ -486,12 +499,14 @@ const DeleteText = styled.Text`
   font-family: ${(props) => props.theme.fontRegular};
 `;
 
-// Plain spacing wrapper: the totals/headings sit directly on the screen
-// background, while the actual income/expense row lists box themselves via
-// ListCard — two nested cards here would just double up the shadow/radius.
+// Sits inside PeriodCard (which already provides the card's own
+// background/radius/shadow/side padding) — this just separates the detail
+// section from the header row above it and adds the card's bottom padding.
 const DetailBox = styled.View`
-  padding-vertical: 4px;
-  margin-bottom: 16px;
+  padding-top: 12px;
+  padding-bottom: 16px;
+  border-top-width: 1px;
+  border-top-color: ${(props) => props.theme.border};
 `;
 
 const DetailTotalText = styled.Text`
@@ -506,11 +521,7 @@ const NetSavingsText = styled(DetailTotalText)`
   font-family: ${(props) => props.theme.fontBold};
 `;
 
-const SubsectionHeading = styled.Text`
-  font-size: 14px;
-  line-height: 20px;
+const SubsectionHeading = styled(Heading)`
   margin-top: 16px;
   margin-bottom: 8px;
-  color: ${(props) => props.theme.text};
-  font-family: ${(props) => props.theme.fontSemiBold};
 `;

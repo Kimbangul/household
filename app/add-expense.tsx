@@ -11,6 +11,7 @@ import type { Category } from '../src/domain/types';
 import { useFieldFormState } from '../src/hooks/useFieldFormState';
 import { useRepository } from '../src/storage/RepositoryContext';
 import {
+  Card,
   FieldError,
   FieldInput,
   FieldLabel,
@@ -21,6 +22,7 @@ import {
   SubmitButton,
   SubmitButtonText,
 } from '../src/theme/styledPrimitives';
+import { withAlpha } from '../src/theme/withAlpha';
 import { generateId } from '../src/utils/generateId';
 import { parseDigitAmount } from '../src/utils/parseDigitAmount';
 import { todayAsDateString } from '../src/utils/today';
@@ -158,116 +160,159 @@ export default function AddExpenseScreen() {
         </ModeToggleButton>
       </ModeToggleRow>
 
-      <FieldLabel>날짜</FieldLabel>
-      <FieldInput
-        value={date}
-        onChangeText={(value) => {
-          setDate(value);
-          clearFieldError('date');
-        }}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor={theme.textMuted}
-        autoCapitalize="none"
-      />
-      {errors.date ? <FieldError>{errors.date}</FieldError> : null}
+      <Card>
+        <FieldLabel>날짜</FieldLabel>
+        <FieldInput
+          value={date}
+          onChangeText={(value) => {
+            setDate(value);
+            clearFieldError('date');
+          }}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor={theme.textMuted}
+          autoCapitalize="none"
+        />
+        {errors.date ? <FieldError>{errors.date}</FieldError> : null}
 
-      <FieldLabel>{mode === 'expense' ? '품목' : '내용'}</FieldLabel>
-      <FieldInput
-        value={item}
-        onChangeText={(value) => {
-          setItem(value);
-          clearFieldError('item');
-        }}
-        placeholder={mode === 'expense' ? '예: 점심' : '예: 8월 급여'}
-        placeholderTextColor={theme.textMuted}
-      />
-      {errors.item ? <FieldError>{errors.item}</FieldError> : null}
+        <FieldLabel>{mode === 'expense' ? '품목' : '내용'}</FieldLabel>
+        <FieldInput
+          value={item}
+          onChangeText={(value) => {
+            setItem(value);
+            clearFieldError('item');
+          }}
+          placeholder={mode === 'expense' ? '예: 점심' : '예: 8월 급여'}
+          placeholderTextColor={theme.textMuted}
+        />
+        {errors.item ? <FieldError>{errors.item}</FieldError> : null}
 
-      <FieldLabel>금액</FieldLabel>
-      <FieldInput
-        value={amountText}
-        onChangeText={(value) => {
-          setAmountText(value);
-          clearFieldError('amount');
-        }}
-        placeholder={mode === 'expense' ? '예: 12000' : '예: 3000000'}
-        placeholderTextColor={theme.textMuted}
-        keyboardType="numeric"
-      />
-      {amountText.length > 0 && Number.isFinite(amount) && amount > 0 ? (
-        <PreviewText>{formatCurrency(amount)}</PreviewText>
-      ) : null}
-      {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
+        <FieldLabel>금액</FieldLabel>
+        <FieldInput
+          value={amountText}
+          onChangeText={(value) => {
+            setAmountText(value);
+            clearFieldError('amount');
+          }}
+          placeholder={mode === 'expense' ? '예: 12000' : '예: 3000000'}
+          placeholderTextColor={theme.textMuted}
+          keyboardType="numeric"
+        />
+        {amountText.length > 0 && Number.isFinite(amount) && amount > 0 ? (
+          <PreviewText $mode={mode}>{formatCurrency(amount)}</PreviewText>
+        ) : null}
+        {errors.amount ? <FieldError>{errors.amount}</FieldError> : null}
 
-      {mode === 'expense' ? (
-        <>
-          <FieldLabel>카테고리</FieldLabel>
-          {categoriesError ? (
-            <FieldError>카테고리를 불러오지 못했습니다. 앱을 다시 시작해주세요.</FieldError>
-          ) : (
-            <CategoryChipPicker
-              categories={categories}
-              selectedId={categoryId}
-              onSelect={(id) => {
-                setCategoryId(id);
-                clearFieldError('categoryId');
-              }}
-            />
-          )}
-          {errors.categoryId ? <FieldError>{errors.categoryId}</FieldError> : null}
-        </>
-      ) : null}
+        {mode === 'expense' ? (
+          <>
+            <FieldLabel>카테고리</FieldLabel>
+            {categoriesError ? (
+              <FieldError>카테고리를 불러오지 못했습니다. 앱을 다시 시작해주세요.</FieldError>
+            ) : (
+              <CategoryChipPicker
+                categories={categories}
+                selectedId={categoryId}
+                onSelect={(id) => {
+                  setCategoryId(id);
+                  clearFieldError('categoryId');
+                }}
+              />
+            )}
+            {errors.categoryId ? <FieldError>{errors.categoryId}</FieldError> : null}
+          </>
+        ) : null}
 
-      <FieldLabel>비고 (선택)</FieldLabel>
-      <MemoInput
-        value={memo}
-        onChangeText={(value) => {
-          setMemo(value);
-          setSubmitStatus(null);
-        }}
-        placeholder="메모"
-        placeholderTextColor={theme.textMuted}
-        multiline
-      />
+        <FieldLabel>비고 (선택)</FieldLabel>
+        <MemoInput
+          value={memo}
+          onChangeText={(value) => {
+            setMemo(value);
+            setSubmitStatus(null);
+          }}
+          placeholder="메모"
+          placeholderTextColor={theme.textMuted}
+          multiline
+        />
 
-      <SubmitButton onPress={handleSubmit} disabled={isSaving}>
-        <SubmitButtonText>{isSaving ? '저장 중...' : '저장'}</SubmitButtonText>
-      </SubmitButton>
+        <SubmitButton onPress={handleSubmit} disabled={isSaving}>
+          <SubmitButtonText>{isSaving ? '저장 중...' : '저장'}</SubmitButtonText>
+        </SubmitButton>
 
-      {submitStatus === 'success' ? (
-        <StatusSuccessText>
-          {mode === 'expense' ? '지출내역이 저장되었습니다.' : '수입내역이 저장되었습니다.'}
-        </StatusSuccessText>
-      ) : null}
-      {submitStatus === 'error' ? (
-        <StatusErrorText>저장하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
-      ) : null}
+        {submitStatus === 'success' ? (
+          <StatusSuccessText>
+            {mode === 'expense' ? '지출내역이 저장되었습니다.' : '수입내역이 저장되었습니다.'}
+          </StatusSuccessText>
+        ) : null}
+        {submitStatus === 'error' ? (
+          <StatusErrorText>저장하지 못했습니다. 다시 시도해주세요.</StatusErrorText>
+        ) : null}
+      </Card>
     </Screen>
   );
 }
 
-const PreviewText = styled.Text`
-  margin-top: 4px;
-  color: ${(props) => props.theme.textMuted};
-  font-family: ${(props) => props.theme.fontRegular};
+// A hero-sized live preview of the amount as it's typed — the biggest number
+// on the screen, colored per the active mode's meaning (expense=danger,
+// income=primary, same as everywhere else amounts are shown).
+const PreviewText = styled.Text<{ $mode: EntryMode }>`
+  margin-top: 8px;
+  text-align: center;
+  font-size: 32px;
+  line-height: 40px;
+  color: ${(props) => (props.$mode === 'expense' ? props.theme.danger : props.theme.primary)};
+  font-family: ${(props) => props.theme.fontExtraBold};
 `;
 
-const ModeToggleRow = styled.View`
+// Neumorphic track (inset shadow) holding the two mode buttons — the active
+// one lifts off the track with a solid fill + soft colored shadow. boxShadow
+// can't live inside a styled `css` template (styled-components/native's CSS
+// parser doesn't recognize the declaration and throws at runtime), so both
+// shadows here are built as style objects via `useTheme()` instead.
+const ModeToggleRowBase = styled.View`
   flex-direction: row;
-  gap: 8px;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 16px;
+  background-color: ${(props) => props.theme.background};
+  margin-bottom: 8px;
 `;
 
-const ModeToggleButton = styled(Pressable)<{ $active: boolean }>`
+function ModeToggleRow({ children }: { children: React.ReactNode }) {
+  const theme = useTheme();
+  return <ModeToggleRowBase style={{ boxShadow: theme.insetShadow }}>{children}</ModeToggleRowBase>;
+}
+
+const ModeToggleButtonBase = styled(Pressable)<{ $active: boolean }>`
   flex: 1;
-  border-radius: 15px;
+  border-radius: 13px;
   padding-vertical: 10px;
   align-items: center;
-  background-color: ${(props) => (props.$active ? props.theme.primary : props.theme.card)};
+  background-color: ${(props) => (props.$active ? props.theme.primary : 'transparent')};
 `;
+
+function ModeToggleButton({
+  $active,
+  onPress,
+  children,
+}: {
+  $active: boolean;
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
+  const theme = useTheme();
+  return (
+    <ModeToggleButtonBase
+      $active={$active}
+      onPress={onPress}
+      style={{ boxShadow: $active ? `0px 6px 16px -4px ${withAlpha(theme.primary, 0.4)}` : 'none' }}
+    >
+      {children}
+    </ModeToggleButtonBase>
+  );
+}
 
 const ModeToggleText = styled.Text<{ $active: boolean }>`
   font-size: 16px;
   line-height: 24px;
-  color: ${(props) => (props.$active ? props.theme.onPrimary : props.theme.text)};
-  font-family: ${(props) => props.theme.fontMedium};
+  color: ${(props) => (props.$active ? props.theme.onPrimary : props.theme.textMuted)};
+  font-family: ${(props) => props.theme.fontBold};
 `;

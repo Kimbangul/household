@@ -13,11 +13,12 @@ function keyFor(stat: CategoryStat): string {
   return stat.categoryId ?? 'uncategorized';
 }
 
-// A fixed-size palette runs out once a period spans more categories than it
-// has colors (this app seeds 14 default categories), silently reusing colors
-// for unrelated slices. Spacing hues evenly across however many real
-// categories are present keeps every slice visually distinct regardless of
-// count.
+// A fixed-size palette (the same one CategoryIconChip/CategoryChipPicker use
+// elsewhere) runs out once a period spans more categories than it has colors
+// (this app seeds 14 default categories), silently reusing colors for
+// unrelated slices. Spacing hues evenly across however many real categories
+// are present keeps every slice visually distinct regardless of count —
+// this chart intentionally does NOT reuse the app-wide hash palette.
 function buildColorMap(stats: CategoryStat[]): Map<string, string> {
   const categorized = stats.filter((stat) => stat.categoryId !== null);
   const hueStep = categorized.length === 0 ? 0 : 360 / categorized.length;

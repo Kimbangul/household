@@ -1,8 +1,9 @@
 import styled from 'styled-components/native';
 
-// Mirrors the iBank kit's "Tab bar / Home" active state: the focused tab
-// grows into a rounded pill (brand-color fill, white icon + label); every
-// other tab shows just the outline icon in a muted color, no label.
+// Soft-modern bottom nav: label always visible under the icon (not just on
+// the active tab), active tab gets bold + primary color, inactive stays
+// regular weight + muted — no pill/background fill, unlike the previous
+// iBank-style active-pill treatment.
 export function TabBarIcon({
   focused,
   label,
@@ -13,26 +14,31 @@ export function TabBarIcon({
   children: React.ReactNode;
 }) {
   return (
-    <Pill $focused={focused}>
+    <Stack>
       {children}
-      {focused ? <PillLabel>{label}</PillLabel> : null}
-    </Pill>
+      <Label
+        $focused={focused}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+      >
+        {label}
+      </Label>
+    </Stack>
   );
 }
 
-const Pill = styled.View<{ $focused: boolean }>`
-  flex-direction: row;
+const Stack = styled.View`
   align-items: center;
-  gap: 6px;
-  padding-horizontal: ${(props) => (props.$focused ? '14px' : '10px')};
-  padding-vertical: 8px;
-  border-radius: 20px;
-  background-color: ${(props) => (props.$focused ? props.theme.primary : 'transparent')};
+  gap: 4px;
+  padding-vertical: 6px;
 `;
 
-const PillLabel = styled.Text`
-  font-size: 12px;
-  line-height: 16px;
-  color: ${(props) => props.theme.onPrimary};
-  font-family: ${(props) => props.theme.fontRegular};
+const Label = styled.Text<{ $focused: boolean }>`
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.3px;
+  color: ${(props) => (props.$focused ? props.theme.primary : props.theme.textMuted)};
+  font-family: ${(props) => (props.$focused ? props.theme.fontBold : props.theme.fontRegular)};
 `;
