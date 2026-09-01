@@ -68,8 +68,12 @@ export const ActionRow = styled.View`
   margin-top: 20px;
 `;
 
+// ActionRow stacks these vertically (flex-direction: column) with no fixed
+// height, so `flex: 1` (flexBasis: 0%) has no bounded space to grow into and
+// squashes the button toward zero height instead of sizing to its content —
+// ActionRow's default `alignItems: 'stretch'` already makes it full-width
+// without needing flex here.
 export const SaveButton = styled(Pressable)`
-  flex: 1;
   border-radius: 14px;
   padding-vertical: 14px;
   align-items: center;
@@ -84,8 +88,8 @@ export const SaveButtonText = styled.Text`
 `;
 
 // Outlined ghost button: no fill, danger-colored border and label only.
+// See SaveButton's note above on why this has no `flex: 1`.
 export const DeleteButton = styled(Pressable)`
-  flex: 1;
   border-radius: 14px;
   border-width: 1px;
   border-color: ${(props) => props.theme.danger};
