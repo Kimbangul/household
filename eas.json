@@ -1,0 +1,9 @@
+{
+  "build": {
+    "production": {
+      "distribution": "internal",
+      "channel": "production",
+      "autoIncrement": true
+    }
+  }
+}
