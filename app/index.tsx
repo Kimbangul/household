@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components/native';
 
 import { ExpenseEditRow, type ExpenseActionResult } from '../src/components/ExpenseEditRow';
+import { findMostIncreasedCategory } from '../src/domain/categoryIncrease';
 import { buildCategoryNameMap } from '../src/domain/categoryLookup';
 import { formatCurrency } from '../src/domain/currency';
 import { createExpense, type ExpenseInput } from '../src/domain/expense';
@@ -78,6 +79,18 @@ export default function MainScreen() {
   const periodComparison = useMemo(
     () => compareRecentPeriods(periods, allExpenses, today),
     [periods, allExpenses, today],
+  );
+  const mostIncreasedCategory = useMemo(
+    () =>
+      periodComparison
+        ? findMostIncreasedCategory(
+            periodComparison.latest,
+            periodComparison.previous,
+            allExpenses,
+            categoryNames,
+          )
+        : null,
+    [periodComparison, allExpenses, categoryNames],
   );
 
   async function handleSaveExpense(id: string, input: ExpenseInput): Promise<ExpenseActionResult> {
@@ -178,6 +191,11 @@ export default function MainScreen() {
             ) : (
               <DiffText $tone="muted">이전과 동일한 지출입니다</DiffText>
             )}
+            {mostIncreasedCategory ? (
+              <CategoryIncreaseText>
+                {mostIncreasedCategory.label} +{formatCurrency(mostIncreasedCategory.increase)} 증가
+              </CategoryIncreaseText>
+            ) : null}
           </DiffBanner>
         </ComparisonBox>
       ) : (
@@ -346,6 +364,15 @@ const DiffText = styled.Text<{ $tone: 'danger' | 'success' | 'muted' }>`
 
 const DiffAmount = styled.Text`
   font-family: ${(props) => props.theme.fontBold};
+`;
+
+const CategoryIncreaseText = styled.Text`
+  text-align: center;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 14px;
+  font-family: ${(props) => props.theme.fontRegular};
+  color: ${(props) => props.theme.textMuted};
 `;
 
 const EmptyRow = styled.View`
